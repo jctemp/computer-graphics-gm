@@ -2,6 +2,14 @@ import * as THREE from 'three';
 import { DragControls } from "three/examples/jsm/controls/DragControls";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
+export interface Draggable {
+    dragUpdate(): void;
+}
+
+export function isDraggable(object: any): boolean {
+    return object.dragUpdate != undefined;
+}
+
 export class Canvas {
 
     renderer: THREE.WebGLRenderer;
@@ -16,7 +24,7 @@ export class Canvas {
 
         const app = document.getElementById(htmlId);
         if (app === null) {
-            throw new Error("Container element with id 'app' does not exists.");
+            throw new Error(`Container element with id '${htmlId}' does not exists.`);
         }
 
         // CREATE RENDERER
@@ -47,7 +55,7 @@ export class Canvas {
         } else { // CREATE ORTHOGONAL CAMERA
             const aspect = width() / height();
             this.camera = new THREE.OrthographicCamera(-aspect, aspect, 1, -1, 0.1, 1000);
-            this.camera.position.z = 1;
+            this.camera.position.z = 10;
 
             window.addEventListener('resize', () => {
                 const aspect = width() / height();
@@ -64,27 +72,42 @@ export class Canvas {
         // CREATE CONTROLS
         this.dragControls = new DragControls([], this.camera, this.renderer.domElement);
         this.orbitControls = new OrbitControls(this.camera, this.renderer.domElement);
-        
+
+        if (!perspective) {
+            this.orbitControls.enableRotate = false;
+        }
+
         this.dragControls.addEventListener("dragstart", (event) => {
             this.orbitControls.enabled = false;
-            event.object.callback();
+            if (isDraggable(event.object)) {
+                event.object.dragUpdate();
+            }
         });
 
         this.dragControls.addEventListener("drag", (event) => {
-            event.object.callback();
+            if (isDraggable(event.object)) {
+                event.object.dragUpdate();
+            }
         });
 
         this.dragControls.addEventListener('dragend', (event) => {
             this.orbitControls.enabled = true;
-            event.object.callback();
+            if (isDraggable(event.object)) {
+                event.object.dragUpdate();
+            }
         });
     }
 
-    public append(item: THREE.Object3D, draggable: boolean = false) {
+    public append(item: THREE.Object3D): void {
         this.scene.add(item);
-        if (draggable) {
-            this.dragControls.getObjects().push(item);
-        }
+    }
+
+    public contains(item: THREE.Object3D): boolean {
+        return this.scene.getObjectById(item.id) != undefined;
+    }
+
+    public draggable(item: THREE.Object3D): void {
+        this.dragControls.getObjects().push(item);
     }
 
     public draw(): void {

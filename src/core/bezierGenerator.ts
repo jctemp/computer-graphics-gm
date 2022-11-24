@@ -82,7 +82,7 @@ export class BezierGenerator {
      */
     public static calculateIntermediates(points: Array<THREE.Vector3>, t: number): Array<Array<THREE.Vector3>> {
         const iterations = new Array<Array<THREE.Vector3>>();
-        while (points.length > 1) {
+        while (points.length > 2) {
             points = BezierGenerator.deCasteljauIteration(points, t);
             iterations.push(new Array(...points));
         }

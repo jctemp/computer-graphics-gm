@@ -1,21 +1,22 @@
-import * as THREE from "three";
+import { BufferGeometry, LineBasicMaterial, Vector3 } from "three";
+import * as THREE from "three"
 
 export class Line extends THREE.Line {
     private length: number;
     constructor() {
         super();
-        this.geometry = new THREE.BufferGeometry();
-        this.material = new THREE.LineBasicMaterial();
+        this.geometry = new BufferGeometry();
+        this.material = new LineBasicMaterial();
         this.length = 0;
     }
 
-    public set data(points: Array<THREE.Vector3>) {
+    public set data(points: Array<Vector3>) {
         if (this.length != points.length) {
             // dispose buffer if not undefined
             this.geometry.dispose();
 
             // create buffer with points
-            this.geometry = new THREE.BufferGeometry()
+            this.geometry = new BufferGeometry()
                 .setFromPoints(points);
 
             // update length
@@ -30,15 +31,14 @@ export class Line extends THREE.Line {
         }
     }
 
-    public set color(v: number) {
-        let m = this.material as THREE.LineBasicMaterial;
-        m.color.setHex(v);
-        m.needsUpdate = true;
+    public get color(): number {
+        let m = this.material as LineBasicMaterial;
+        return m.color.getHex();
     }
 
-    public set thickness(v: number) {
-        let m = this.material as THREE.LineBasicMaterial;
-        m.linewidth = v;
+    public set color(v: number) {
+        let m = this.material as LineBasicMaterial;
+        m.color.setHex(v);
         m.needsUpdate = true;
     }
 }
