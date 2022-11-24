@@ -1,7 +1,7 @@
 import { Group, Vector3 } from "three";
 import { BezierGenerator } from "../core/bezierGenerator";
 import { Canvas } from "../core/canvas";
-import { primaryColor, secondaryColor } from "../core/color";
+import { primaryColor, primaryColorMax, secondaryColor } from "../core/color";
 import { Line } from "../core/line";
 import { Point } from "../core/point";
 import { Controller } from "./controller";
@@ -18,16 +18,16 @@ export class BezierCurveController extends Controller {
     curveControlLine: Line;
     curveControlPoints: Array<Point>;
 
-    lerpGroupedLines: Group;
-    lerpLines: Array<Line>;
+    lerpGroupedLines!: Group;
+    lerpLines!: Array<Line>;
 
-    lerpGroup: Group;
-    lerpPoint: Point;
-    lerpDerivative: Line;
+    lerpGroup!: Group;
+    lerpPoint!: Point;
+    lerpDerivative!: Line;
 
-    bernsteinGroup: Group;
-    bernsteinPolynomials: Array<Line>;
-    bernsteinPoints: Array<Point>;
+    bernsteinGroup!: Group;
+    bernsteinPolynomials!: Array<Line>;
+    bernsteinPoints!: Array<Point>;
 
     constructor(canvasWidth: () => number, canvasHeight: () => number) {
         super();
@@ -73,9 +73,16 @@ export class BezierCurveController extends Controller {
             this.canvas[0].draggable(point);
         }
 
-        this.canvas[0].append(this.curveEssentials)
+        this.canvas[0].append(this.curveEssentials);
 
-        // 4. construction meshes
+        this.createLerpGroup();
+        this.createBernsteinGroup();
+    }
+
+    private createLerpGroup() {
+        this.lerpGroup?.removeFromParent();
+        this.lerpGroupedLines?.removeFromParent();
+
         const points = this.controlPoints();
 
         this.lerpGroup = new Group();
@@ -103,8 +110,13 @@ export class BezierCurveController extends Controller {
 
         this.canvas[0].append(this.lerpGroup);
         this.canvas[0].append(this.lerpGroupedLines);
+    }
 
-        // 5. Berstein Polynomials
+    private createBernsteinGroup() {
+        this.bernsteinGroup?.removeFromParent();
+
+        const points = this.controlPoints();
+
         const coefficients = BezierGenerator.evaluateBasisFunctions(points.length, this.resolution);
         this.bernsteinGroup = new Group();
 
@@ -128,6 +140,39 @@ export class BezierCurveController extends Controller {
 
         this.canvas[1].append(this.bernsteinGroup);
         this.bernsteinGroup.position.set(-.5, -.5, 0)
+    }
+
+    private addPoint(position: Vector3 = new Vector3()) {
+        if (this.curveControlPoints.length == primaryColorMax) {
+            return;
+        }
+
+        let point = new Point("cube", 1);
+        point.updatePosition(position);
+
+        point.dragUpdate = () => this.needsUpdate = true;
+        point.color = primaryColor[this.curveControlPoints.length];
+        point.name = `curveControlPoint${this.curveControlPoints.length}`;
+
+        this.curveControlPoints.push(point);
+        this.curveEssentials.add(point);
+        this.canvas[0].draggable(point);
+
+        this.createLerpGroup();
+        this.createBernsteinGroup();
+
+        this.needsUpdate = true;
+    }
+
+    private removePoint() {
+        if (this.curveControlPoints.length > 2) {
+            const point = this.curveControlPoints.pop();
+            point?.removeFromParent();
+            this.needsUpdate = true;
+
+            this.createLerpGroup();
+            this.createBernsteinGroup();
+        }
     }
 
     override update(): void {
@@ -163,12 +208,16 @@ export class BezierCurveController extends Controller {
         folder.add(this, "resolution", 16, 256, 2)
             .onChange(() => this.needsUpdate = true).name("Resolution");
         folder.add(this, "step", 0, 1, .01).name("t (time)");
-        folder.add(this, "toggleControlLine").name("Toggle Control Line");
 
-        const point = folder.addFolder("Bezier Curve Intermediates");
-        point.add(this, "tangentSize", 1, 10, .1).name("Tangent Magnitude");
-        point.add(this, "toggleLerpGroup").name("Toggle Point");
+        const points = folder.addFolder("Bezier Curve Control Points");
+        points.add(this, "addPoint").name("Add Control Point");
+        points.add(this, "removePoint").name("Remove Control Point");
+
+        const point = folder.addFolder("Bezier Curve Helper");
+        point.add(this, "toggleControlLine").name("Toggle Control Line");
         point.add(this, "toggleLerpGroupedLines").name("Toggle Lerp Lines");
+        point.add(this, "toggleLerpGroup").name("Toggle Point");
+        point.add(this, "tangentSize", 1, 10, .1).name("Tangent Magnitude");
     }
 
     private toggleControlLine(): void {
