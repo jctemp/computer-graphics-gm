@@ -1,4 +1,4 @@
-import { Color, Group, MeshBasicMaterial, Scene, Vector3 } from "three";
+import { Group, Vector3 } from "three";
 import { BezierGenerator } from "../core/bezierGenerator";
 import { Canvas } from "../core/canvas";
 import { primaryColor, secondaryColor } from "../core/color";

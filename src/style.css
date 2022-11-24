@@ -1,6 +1,6 @@
 :root {
-  --primary-color: #233142;
-  --secondary-color: #455d7a;
+  --primary-color: #111111;
+  --secondary-color: #222222;
   --acent-strong-color: #f95959;
   --acent-soft-color: #e3e3e3;
 }
@@ -13,23 +13,24 @@
 }
 
 body {
-  background: #455d7a;
+  background: var(--secondary-color)
 }
 
 button {
-  background: #233142;
+  background: var(--primary-color);
   border: none;
 
-  color:#e3e3e3;
+  color: var(--acent-soft-color);
 
   padding-top: 15px;
-  padding-left: 5px;
+  padding-left: 20px;
   padding-bottom: 15px;
-  padding-right: 5px;
+  padding-right: 20px;
 }
 
 button:hover {
-  background: #455d7a;
+  background: var(--secondary-color);
+  color: var(--acent-strong-color);
 }
 
 nav {
@@ -42,7 +43,7 @@ nav {
   padding-left: 10px;
   padding-right: 10px;
 
-  background: #233142;
+  background: var(--primary-color);
 }
 
 #app {
