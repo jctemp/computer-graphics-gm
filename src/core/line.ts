@@ -27,7 +27,6 @@ export class Line extends THREE.Line {
 
             points.forEach((v, i) => { positions.setXYZ(i, v.x, v.y, v.z); });
             this.geometry.attributes.position.needsUpdate = true;
-            this.geometry.computeBoundingBox();
         }
     }
 

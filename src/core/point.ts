@@ -2,7 +2,6 @@ import { Mesh, BoxGeometry, SphereGeometry, MeshBasicMaterial, Vector3 } from "t
 import { Draggable } from "./canvas";
 
 export class Point extends Mesh implements Draggable {
-
     constructor(type: string, size: number) {
         super();
 

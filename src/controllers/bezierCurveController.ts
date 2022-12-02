@@ -117,7 +117,7 @@ export class BezierCurveController extends Controller {
 
         const points = this.controlPoints();
 
-        const coefficients = BezierGenerator.evaluateBasisFunctions(points.length, this.resolution);
+        const coefficients = BezierGenerator.generateBasisFunctions(points.length, this.resolution);
         this.bernsteinGroup = new Group();
 
         this.bernsteinPolynomials = new Array<Line>();

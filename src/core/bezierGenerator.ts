@@ -11,26 +11,64 @@ export class BezierGenerator {
      * @param resolution resolution of the x and y direction
      * @returns 2d matrix containing the surface points regarding bezier curves
      */
-    public static generateBezierSurface(points: Array<Array<THREE.Vector3>>, resolution: [number, number]): Array<Array<THREE.Vector3>> {
+    public static generateBezierSurface(points: Array<Array<THREE.Vector3>>, resolution: [number, number]): [Array<Array<THREE.Vector3>>, Array<Array<THREE.Vector3>>] {
+        const pointsTransposed = BezierGenerator.transpose(points);
+
+        // generate curves along x
         const xBezierCurves: Array<Array<THREE.Vector3>> = new Array<Array<THREE.Vector3>>();
         for (let idx = 0; idx < points.length; idx++) {
             xBezierCurves.push(BezierGenerator.generateBezierCurve(points[idx], resolution[0]));
         }
 
+        // generate curves along y
         const yBezierCurves: Array<Array<THREE.Vector3>> = new Array<Array<THREE.Vector3>>();
-        for (let idx = 0; idx < xBezierCurves[0].length; idx++) {
-            yBezierCurves[idx] = new Array<THREE.Vector3>();
-            for (let jdx = 0; jdx < xBezierCurves.length; jdx++) {
-                yBezierCurves[idx].push(xBezierCurves[jdx][idx]);
+        for (let idx = 0; idx < pointsTransposed.length; idx++) {
+            yBezierCurves.push(BezierGenerator.generateBezierCurve(pointsTransposed[idx], resolution[1]));
+        }
+
+        // transpose matrix
+        const xBezierCurvesT = BezierGenerator.transpose(xBezierCurves); // res0, x.len
+        const yBezierCurvesT = BezierGenerator.transpose(yBezierCurves); // res1, y.len
+
+        // generate curve
+        const xyBezierCurves: Array<Array<THREE.Vector3>> = new Array<Array<THREE.Vector3>>();
+        for (let idx = 0; idx < xBezierCurvesT.length; idx++) {
+            xyBezierCurves.push(BezierGenerator.generateBezierCurve(xBezierCurvesT[idx], resolution[1]));
+        }
+
+        const yCurvesDerivative: Array<Array<THREE.Vector3>> = new Array<Array<THREE.Vector3>>();
+        for (let idx = 0; idx < xBezierCurvesT.length; idx++) {
+            yCurvesDerivative.push(BezierGenerator.generateCurveDerivative(xBezierCurvesT[idx], resolution[1])); // res0, res0
+        }
+
+        let xCurvesDerivative: Array<Array<THREE.Vector3>> = new Array<Array<THREE.Vector3>>();
+        for (let idx = 0; idx < yBezierCurvesT.length; idx++) {
+            xCurvesDerivative.push(BezierGenerator.generateCurveDerivative(yBezierCurvesT[idx], resolution[0])); // res1, res0
+        }
+
+        const normalsBezierCurves: Array<Array<THREE.Vector3>> = new Array<Array<THREE.Vector3>>();
+        for (let idx = 0; idx <= resolution[0]; idx++) {
+            normalsBezierCurves.push(new Array<THREE.Vector3>())
+            for (let jdx = 0; jdx <= resolution[1]; jdx++) {
+                normalsBezierCurves[idx].push(xCurvesDerivative[jdx][idx].clone().cross(yCurvesDerivative[idx][jdx]))
             }
         }
 
-        const xyBezierCurves: Array<Array<THREE.Vector3>> = new Array<Array<THREE.Vector3>>();
-        for (let idx = 0; idx < yBezierCurves.length; idx++) {
-            xyBezierCurves.push(BezierGenerator.generateBezierCurve(yBezierCurves[idx], resolution[1]));
-        }
+        return [xyBezierCurves, normalsBezierCurves];
+    }
 
-        return xyBezierCurves;
+    /**
+     * transpose
+     */
+    public static transpose(matrix: Array<Array<THREE.Vector3>>): Array<Array<THREE.Vector3>> {
+        const transposed: Array<Array<THREE.Vector3>> = new Array<Array<THREE.Vector3>>();
+        for (let idx = 0; idx < matrix[0].length; idx++) {
+            transposed[idx] = new Array<THREE.Vector3>();
+            for (let jdx = 0; jdx < matrix.length; jdx++) {
+                transposed[idx].push(matrix[jdx][idx]);
+            }
+        }
+        return transposed;
     }
 
     /**
@@ -44,6 +82,21 @@ export class BezierGenerator {
         for (let idx = 0; idx <= resolution; idx++) {
             const t = idx / resolution;
             curve.push(BezierGenerator.evaluatePoint(points, t));
+        }
+        return curve;
+    }
+
+    /**
+     * Determines an approximation of a curve with n points where n = resolutions 
+     * @param points control points of the curve
+     * @param resolution amount of targeted points 
+     * @returns Generated positions regarding the control points 
+     */
+    public static generateCurveDerivative(points: Array<THREE.Vector3>, resolution: number): Array<THREE.Vector3> {
+        const curve: Array<THREE.Vector3> = new Array<THREE.Vector3>();
+        for (let idx = 0; idx <= resolution; idx++) {
+            const t = idx / resolution;
+            curve.push(BezierGenerator.evaluateDerivative(points, t));
         }
         return curve;
     }
@@ -109,7 +162,7 @@ export class BezierGenerator {
      * Calculates the Bernstein polynomial function of a basis degree n
      * @param degree of the desired polynomials
      */
-    public static evaluateBasisFunctions(pointsCount: number, resolution: number): Array<Array<number>> {
+    public static generateBasisFunctions(pointsCount: number, resolution: number): Array<Array<number>> {
         const baseFunctions = Array<Array<number>>();
         for (let idx = 0; idx < pointsCount; idx++) {
             baseFunctions.push(Array<number>())
