@@ -5,6 +5,13 @@ import { Controller } from './controllers/controller';
 import { BezierCurveController } from './controllers/bezierCurveController';
 import { BezierSurfaceController } from './controllers/bezierSurfaceController';
 
+const bcurves = document.getElementById("bezier-curve");
+const bsurfaces = document.getElementById("bezier-surface");
+const bnurbs = document.getElementById("bsplines-nurbs");
+
+let gui = new dat.GUI();
+let controller: Controller = createBezierSurfaceController();
+
 function requestNavElement(): HTMLElement {
     const nav = document.getElementById("nav");
     if (nav === null) {
@@ -47,10 +54,24 @@ function createBezierSurfaceController(): Controller {
     return new BezierSurfaceController(width, height);
 }
 
-const gui = new dat.GUI();
+if (bcurves) {
+    bcurves.onclick = () => {
+        gui.destroy();
+        gui = new dat.GUI();
+        resetAppElement();
+        controller = createBezierCurveController();
+        controller.run()
+        controller.gui(gui);
+    }
+}
 
-// const controller: Controller = createBezierCurveController();
-const controller: Controller = createBezierSurfaceController();
-
-controller.gui(gui);
-controller.run()
+if (bsurfaces) {
+    bsurfaces.onclick = () => {
+        gui.destroy();
+        gui = new dat.GUI();
+        resetAppElement();
+        controller = createBezierSurfaceController();
+        controller.run()
+        controller.gui(gui);
+    }
+}

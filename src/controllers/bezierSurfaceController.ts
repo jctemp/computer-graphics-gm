@@ -1,5 +1,5 @@
 import { GUI } from "dat.gui";
-import { AmbientLight, DirectionalLight, DirectionalLightHelper, Group } from "three";
+import { AmbientLight, DirectionalLight, Group } from "three";
 import { BezierGenerator } from "../core/bezierGenerator";
 import { Canvas } from "../core/canvas";
 import { Line } from "../core/line";
