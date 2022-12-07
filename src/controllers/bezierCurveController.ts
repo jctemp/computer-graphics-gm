@@ -18,10 +18,10 @@ export class BezierCurveController extends Controller {
     curveControlLine: Line;
     curveControlPoints: Array<Point>;
 
-    lerpGroupedLines!: Group;
+    lerpIntermediates!: Group;
     lerpLines!: Array<Line>;
 
-    lerpGroup!: Group;
+    lerpCurrentPoint!: Group;
     lerpPoint!: Point;
     lerpDerivative!: Line;
 
@@ -80,23 +80,23 @@ export class BezierCurveController extends Controller {
     }
 
     private createLerpGroup() {
-        this.lerpGroup?.removeFromParent();
-        this.lerpGroupedLines?.removeFromParent();
+        this.lerpCurrentPoint?.removeFromParent();
+        this.lerpIntermediates?.removeFromParent();
 
         const points = this.controlPoints();
 
-        this.lerpGroup = new Group();
-        this.lerpGroupedLines = new Group();
+        this.lerpCurrentPoint = new Group();
+        this.lerpIntermediates = new Group();
 
         this.lerpPoint = new Point("", .25);
         this.lerpPoint.meshMaterial.wireframe = false;
         this.lerpPoint.color = secondaryColor[0];
-        this.lerpGroup.add(this.lerpPoint);
+        this.lerpCurrentPoint.add(this.lerpPoint);
 
         this.lerpDerivative = new Line();
         this.lerpDerivative.color = secondaryColor[1];
         this.lerpDerivative.renderOrder = 10;
-        this.lerpGroup.add(this.lerpDerivative);
+        this.lerpCurrentPoint.add(this.lerpDerivative);
 
         this.lerpLines = new Array<Line>();
         BezierGenerator.calculateIntermediates(points, this.step)
@@ -105,11 +105,11 @@ export class BezierCurveController extends Controller {
                 line.data = data;
                 line.color = secondaryColor[2];
                 this.lerpLines.push(line);
-                this.lerpGroupedLines.add(line);
+                this.lerpIntermediates.add(line);
             });
 
-        this.canvas[0].append(this.lerpGroup);
-        this.canvas[0].append(this.lerpGroupedLines);
+        this.canvas[0].append(this.lerpCurrentPoint);
+        this.canvas[0].append(this.lerpIntermediates);
     }
 
     private createBernsteinGroup() {
@@ -142,39 +142,10 @@ export class BezierCurveController extends Controller {
         this.bernsteinGroup.position.set(-.5, -.5, 0)
     }
 
-    private addPoint(position: Vector3 = new Vector3()) {
-        if (this.curveControlPoints.length == primaryColorMax) {
-            return;
-        }
-
-        let point = new Point("cube", 1);
-        point.updatePosition(position);
-
-        point.dragUpdate = () => this.needsUpdate = true;
-        point.color = primaryColor[this.curveControlPoints.length];
-        point.name = `curveControlPoint${this.curveControlPoints.length}`;
-
-        this.curveControlPoints.push(point);
-        this.curveEssentials.add(point);
-        this.canvas[0].draggable(point);
-
-        this.createLerpGroup();
-        this.createBernsteinGroup();
-
-        this.needsUpdate = true;
-    }
-
-    private removePoint() {
-        if (this.curveControlPoints.length > 2) {
-            const point = this.curveControlPoints.pop();
-            point?.removeFromParent();
-            this.needsUpdate = true;
-
-            this.createLerpGroup();
-            this.createBernsteinGroup();
-        }
-    }
-
+    /**
+     * Called in every `requestFrameAnimation`. It performs all updates on the
+     * objects that determine the drawn curve.
+     */
     override update(): void {
         const points = this.controlPoints();
 
@@ -214,13 +185,59 @@ export class BezierCurveController extends Controller {
         points.add(this, "removePoint").name("Remove Control Point");
 
         const point = folder.addFolder("Bezier Curve Helper");
-        point.add(this, "toggleControlLine").name("Toggle Control Line");
-        point.add(this, "toggleLerpGroupedLines").name("Toggle Lerp Lines");
-        point.add(this, "toggleLerpGroup").name("Toggle Point");
+        point.add(this, "toggleControlPolygon").name("Toggle Control Polygon");
+        point.add(this, "toggleLerpIntermediates").name("Toggle Lerp Intermediates");
+        point.add(this, "toggleLerpCurrentPoint").name("Toggle Current Point");
         point.add(this, "tangentSize", 1, 10, .1).name("Tangent Magnitude");
     }
 
-    private toggleControlLine(): void {
+
+    /**
+     * `addPoint` is an UI only function. It allows the user to
+     * extend the list of points.
+     */
+    private addPoint(): void {
+        if (this.curveControlPoints.length == primaryColorMax) {
+            return;
+        }
+
+        let point = new Point("cube", 1);
+        point.updatePosition(new Vector3());
+
+        point.dragUpdate = () => this.needsUpdate = true;
+        point.color = primaryColor[this.curveControlPoints.length];
+        point.name = `curveControlPoint${this.curveControlPoints.length}`;
+
+        this.curveControlPoints.push(point);
+        this.curveEssentials.add(point);
+        this.canvas[0].draggable(point);
+
+        this.createLerpGroup();
+        this.createBernsteinGroup();
+
+        this.needsUpdate = true;
+    }
+
+    /**
+     * `removePoint` is an UI function. It allows users to
+     * pop the lsit of points.
+     */
+    private removePoint(): void {
+        if (this.curveControlPoints.length > 2) {
+            const point = this.curveControlPoints.pop();
+            point?.removeFromParent();
+            this.needsUpdate = true;
+
+            this.createLerpGroup();
+            this.createBernsteinGroup();
+        }
+    }
+
+    /**
+     * `toggleControlPolygon` is an Ui function.  It allows the user
+     * to enable or disable the control polygon.
+     */
+    private toggleControlPolygon(): void {
         if (this.canvas[0].contains(this.curveControlLine)) {
             this.curveControlLine.removeFromParent();
         } else {
@@ -228,22 +245,33 @@ export class BezierCurveController extends Controller {
         }
     }
 
-    private toggleLerpGroupedLines(): void {
-        if (this.canvas[0].contains(this.lerpGroupedLines)) {
-            this.lerpGroupedLines.removeFromParent();
+    /**
+     * `toggleLerpIntermediates` is an Ui function.  It allows the user
+     * to enable or disable the lerp intermediates.
+     */
+    private toggleLerpIntermediates(): void {
+        if (this.canvas[0].contains(this.lerpIntermediates)) {
+            this.lerpIntermediates.removeFromParent();
         } else {
-            this.canvas[0].append(this.lerpGroupedLines);
+            this.canvas[0].append(this.lerpIntermediates);
         }
     }
 
-    private toggleLerpGroup(): void {
-        if (this.canvas[0].contains(this.lerpGroup)) {
-            this.lerpGroup.removeFromParent();
+    /**
+     * `toggleLerpCurrentPoint` is an Ui function.  It allows the user
+     * to enable or disable the lerp intermediates.
+     */
+    private toggleLerpCurrentPoint(): void {
+        if (this.canvas[0].contains(this.lerpCurrentPoint)) {
+            this.lerpCurrentPoint.removeFromParent();
         } else {
-            this.canvas[0].append(this.lerpGroup);
+            this.canvas[0].append(this.lerpCurrentPoint);
         }
     }
 
+    /**
+     * Helper function.
+     */
     private controlPoints(): Array<Vector3> {
         return this.curveControlPoints.map(point => point.position.clone())
     }
