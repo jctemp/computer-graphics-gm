@@ -1,11 +1,26 @@
 import { Vector3, Group } from "three";
 import { CustomLine } from "../core/customLine";
 import { BezierGenerator } from "../generators/bezierGenerator";
+import { BezierCurveHelper } from "./bezierCurveHelper";
+
+export interface BezierCurveObserver {
+    /**
+     * The ``BezierCurve`` invokes this function
+     * if the control points changed.
+     */
+    controlPointsChanged(): void;
+
+    /**
+     * The ``BezierCurve`` invokes this function
+     * if the resolution changed.
+     */
+    resolutionChanged(): void;
+}
 
 export class BezierCurve extends Group {
 
     private _resolution: number;
-    private _step: number;
+    private _observers: Array<BezierCurveObserver>;
 
     private _curve: CustomLine;
     private _controlPolygon: CustomLine;
@@ -14,13 +29,17 @@ export class BezierCurve extends Group {
         super();
 
         this._resolution = 100;
-        this._step = .25;
+        this._observers = new Array<BezierCurveObserver>();
 
         this._curve = new CustomLine();
         this._controlPolygon = new CustomLine();
 
         this.add(this._curve);
         this.add(this._controlPolygon);
+    }
+
+    public register(obs: BezierCurveObserver): void {
+        this._observers.push(obs);
     }
 
     /**
@@ -30,6 +49,7 @@ export class BezierCurve extends Group {
     public set controlPolygon(points: Array<Vector3>) {
         this._controlPolygon.data = points;
         this._curve.data = BezierGenerator.generateBezierCurve(points, this.resolution);
+        this._observers.forEach(obs => obs.controlPointsChanged());
     }
 
     /**
@@ -47,21 +67,7 @@ export class BezierCurve extends Group {
     public set resolution(resolution: number) {
         this._resolution = resolution;
         this._curve.data = BezierGenerator.generateBezierCurve(this.controlPoints(), this.resolution);
-    }
-
-    /**
-     * Get the current calculated point on the curve.
-     */
-    public get step(): number {
-        return this._step;
-    }
-    
-    /**
-     * Set the current calculated point on the curve.
-     */
-    public set step(step: number) {
-        this._step = step;
-        // TODO: UPDATE 
+        this._observers.forEach(obs => obs.resolutionChanged());
     }
 
     /**
@@ -94,5 +100,4 @@ export class BezierCurve extends Group {
         }
         return points;
     }
-
 }
