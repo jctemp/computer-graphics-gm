@@ -5,13 +5,16 @@ import { Controller } from './controllers/controller';
 import { BezierCurveController } from './controllers/bezierCurveController';
 import { BezierSurfaceController } from './controllers/bezierSurfaceController';
 
+// fetch button elements from the navbar
 const bcurves = document.getElementById("bezier-curve");
 const bsurfaces = document.getElementById("bezier-surface");
 const bnurbs = document.getElementById("bsplines-nurbs");
 
+// initialise a gui with an controller
 let gui = new dat.GUI();
 let controller: Controller = createBezierSurfaceController();
 
+// find navbar element
 function requestNavElement(): HTMLElement {
     const nav = document.getElementById("nav");
     if (nav === null) {
@@ -20,6 +23,7 @@ function requestNavElement(): HTMLElement {
     return nav;
 }
 
+// find app element
 function requestAppElement(): HTMLElement {
     const app = document.getElementById("app");
     if (app === null) {
@@ -28,6 +32,7 @@ function requestAppElement(): HTMLElement {
     return app;
 }
 
+// remove all elements within the app html element
 function resetAppElement(): void {
     const app = document.getElementById("app");
     if (app === null) {
@@ -36,6 +41,7 @@ function resetAppElement(): void {
     app.replaceChildren();
 }
 
+// procedure to create a bezier curve controller
 function createBezierCurveController(): Controller {
     const nav = requestNavElement();
     const app = requestAppElement();
@@ -46,6 +52,7 @@ function createBezierCurveController(): Controller {
     return new BezierCurveController(width, height);
 }
 
+// procedure to create a bezier surface controller
 function createBezierSurfaceController(): Controller {
     const nav = requestNavElement();
     const width = () => window.innerWidth;
@@ -54,6 +61,7 @@ function createBezierSurfaceController(): Controller {
     return new BezierSurfaceController(width, height);
 }
 
+// procedure to set a new scene with bezier curve controller
 if (bcurves) {
     bcurves.onclick = () => {
         gui.destroy();
@@ -65,6 +73,7 @@ if (bcurves) {
     }
 }
 
+// procedure to set a new scene with bezier surface controller
 if (bsurfaces) {
     bsurfaces.onclick = () => {
         gui.destroy();
