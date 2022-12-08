@@ -1,5 +1,4 @@
 import { Group, Vector3 } from "three";
-import { BezierGenerator } from "../generators/bezier";
 import { Canvas } from "../core/canvas";
 import { primaryColor, primaryColorMax } from "../core/color";
 import { CustomLine } from "../core/customLine";
@@ -8,6 +7,7 @@ import { Controller } from "./controller";
 import { BezierCurve } from "../components/bezierCurve";
 import { BezierCurveHelper } from "../components/bezierCurveHelper";
 import { PolynomialBasisGenerator } from "../generators/polynomialBasis";
+import { connect } from "../core/connector";
 
 
 export class BezierCurveController extends Controller {
@@ -39,8 +39,10 @@ export class BezierCurveController extends Controller {
         this.canvas[0].append(this.bezierCurve);
 
         this.bezierCurveHelper = new BezierCurveHelper();
-        this.bezierCurve.register(this.bezierCurveHelper);
         this.canvas[0].append(this.bezierCurveHelper);
+
+        connect(this.bezierCurve.signalControlPoints, this.bezierCurveHelper.slotControlPoints);
+        connect(this.bezierCurve.signalControlPolygon, this.bezierCurveHelper.slotControlPolygon);
 
         // 4. create control points
         this.bezierCurvePoints = new Array<CustomPoint>();

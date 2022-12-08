@@ -1,8 +1,8 @@
 import { Group, Vector3 } from "three";
+import { Slot } from "../core/connector";
 import { CustomLine } from "../core/customLine";
 import { CustomPoint, Shape } from "../core/customPoint";
 import { BezierGenerator } from "../generators/bezier";
-import { BezierCurveObserver } from "./bezierCurve";
 
 // /**
 //  * This interface should allow foreign object to get a callback
@@ -11,7 +11,10 @@ import { BezierCurveObserver } from "./bezierCurve";
 // export interface BezierCurveHelperObserver {
 // }
 
-export class BezierCurveHelper extends Group implements BezierCurveObserver {
+export class BezierCurveHelper extends Group {
+
+    public slotControlPoints: Slot<Array<Vector3>>;
+    public slotControlPolygon: Slot<boolean>;
 
     private _t: number;
     private _tangentMagnitude: number;
@@ -25,6 +28,22 @@ export class BezierCurveHelper extends Group implements BezierCurveObserver {
 
     constructor() {
         super();
+
+        this.slotControlPoints = new Slot<Array<Vector3>>();
+        this.slotControlPoints.addCallable(buffer => {
+            const newLength = this._controlPoints.length !== buffer.length;
+            this._controlPoints = buffer;
+            if (newLength) {
+                this.resetHelper();
+            }
+            this.updateHelper();
+        });
+
+        this.slotControlPolygon = new Slot<boolean>();
+        this.slotControlPolygon.addCallable(state => {
+            this._contronPointsState = state;
+            this.toggleIntermediates();
+        });
 
         this._t = .25;
         this._tangentMagnitude = 2;
@@ -127,7 +146,7 @@ export class BezierCurveHelper extends Group implements BezierCurveObserver {
     public toggleCurrentPoint() {
         const point = this.children.find(obj => obj === this._point);
         const pointTangent = this.children.find(obj => obj === this._pointTangent);
-        
+
         if (point) {
             this.children = this.children.filter(curr => curr != point);
             this.children = this.children.filter(curr => curr != pointTangent);
@@ -154,19 +173,5 @@ export class BezierCurveHelper extends Group implements BezierCurveObserver {
         if (!disabled && this._contronPointsState) {
             this._intermediates.forEach(o => this.add(o));
         }
-    }
-
-    controlPoints(buffer: Array<Vector3>): void {
-        const newLength = this._controlPoints.length !== buffer.length;
-        this._controlPoints = buffer;
-        if (newLength) {
-            this.resetHelper();
-        }
-        this.updateHelper();
-    }
-
-    controlPolygon(state: boolean): void {
-        this._contronPointsState = state;
-        this.toggleIntermediates();
     }
 }

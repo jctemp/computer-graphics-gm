@@ -1,27 +1,7 @@
 import { Vector3, Group } from "three";
+import { Signal } from "../core/connector";
 import { CustomLine } from "../core/customLine";
 import { BezierGenerator } from "../generators/bezier";
-
-/**
- * This interface should allow foreign object to get a callback
- * if a value of the `BezierCurve` changes.
- */
-export interface BezierCurveObserver {
-
-    /**
-     * The ``BezierCurve`` invokes this function if the control 
-     * points changed. It sends a buffer of the current control
-     * point's positions.
-     * @param buffer contains the new points as a `Vector3`
-     */
-    controlPoints(buffer: Array<Vector3>): void;
-
-    /**
-     * The ``BezierCurve`` invokes this function
-     * if the ``controlPolygon`` is toggled.
-     */
-    controlPolygon(state: boolean): void;
-}
 
 /**
  * ``BezierCurve`` governs all values in respect to the 
@@ -29,8 +9,14 @@ export interface BezierCurveObserver {
  */
 export class BezierCurve extends Group {
 
+    // Emits a signal if the control points in any from.
+    public signalControlPoints: Signal<Array<Vector3>>;
+
+    // Emits a signal if the visibility of the control
+    // polygon changes through the toggle.
+    public signalControlPolygon: Signal<boolean>;
+
     private _resolution: number;
-    private _observers: Array<BezierCurveObserver>;
 
     private _curve: CustomLine;
     private _controlPolygon: CustomLine;
@@ -38,18 +24,16 @@ export class BezierCurve extends Group {
     constructor() {
         super();
 
+        this.signalControlPoints = new Signal<Array<Vector3>>();
+        this.signalControlPolygon = new Signal<boolean>();
+
         this._resolution = 100;
-        this._observers = new Array<BezierCurveObserver>();
 
         this._curve = new CustomLine();
         this._controlPolygon = new CustomLine();
 
         this.add(this._curve);
         this.add(this._controlPolygon);
-    }
-
-    public register(obs: BezierCurveObserver): void {
-        this._observers.push(obs);
     }
 
     /**
@@ -59,7 +43,7 @@ export class BezierCurve extends Group {
     public set controlPolygon(points: Array<Vector3>) {
         this._controlPolygon.data = points;
         this._curve.data = BezierGenerator.generateBezierCurve(points, this.resolution);
-        this._observers.forEach(obs => obs.controlPoints(points));
+        this.signalControlPoints.emit(points);
     }
 
     /**
@@ -91,8 +75,7 @@ export class BezierCurve extends Group {
             this.add(this._controlPolygon);
             state = true;
         }
-        this._observers.forEach(obs => obs.controlPolygon(state));
-
+        this.signalControlPolygon.emit(state);
     }
 
     /**
