@@ -16,11 +16,11 @@ export class SplineTest {
             if (u != knotsLong[idx]) throw new Error("Index translation failed at: " + idx);
         }
 
-        // test for excissae calculation
-        let excissae = SplineLogic.generateExcissae(knots, 3);
+        // test for abscissae calculation
+        let abscissae = SplineLogic.generateAbscissae(knots, 3);
         const compareValues = new Array<number>(0,1/3,1,2,8/3,3);
         for (let idx = 0; idx < compareValues.length; idx++) {
-            if (compareValues[idx] != excissae[idx]) throw new Error("Excissae evaluation failed");
+            if (compareValues[idx] != abscissae[idx]) throw new Error("abscissae evaluation failed");
         }
     }
 }
