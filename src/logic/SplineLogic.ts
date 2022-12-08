@@ -37,21 +37,21 @@ export class SplineLogic {
     }
 
     /**
-     * generate the excissae values from the knot sequence
+     * generate the abscissae values from the knot sequence
      * 
      * @param knots 
      * @param degree 
-     * @returns list of excissae values
+     * @returns list of abscissae values
      */
-    public static generateExcissae(knots: Array<[number, number]>, degree: number): Array<number> {
+    public static generateAbscissae(knots: Array<[number, number]>, degree: number): Array<number> {
         let results = new Array<number>();
         for (let idx = 0; idx <= this.getKnotLength(knots) - degree; idx++) {
-            let excissa = 0;
+            let abscissa = 0;
             for (let jdx = 0; jdx < degree; jdx++) {
-                excissa += this.translateIndex(knots, idx + jdx);
+                abscissa += this.translateIndex(knots, idx + jdx);
             }
-            excissa /= degree;
-            results.push(excissa);
+            abscissa /= degree;
+            results.push(abscissa);
         }
         return results;
     }
