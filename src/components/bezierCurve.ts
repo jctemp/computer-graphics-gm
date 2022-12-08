@@ -1,22 +1,32 @@
 import { Vector3, Group } from "three";
 import { CustomLine } from "../core/customLine";
 import { BezierGenerator } from "../generators/bezierGenerator";
-import { BezierCurveHelper } from "./bezierCurveHelper";
 
+/**
+ * This interface should allow foreign object to get a callback
+ * if a value of the `BezierCurve` changes.
+ */
 export interface BezierCurveObserver {
+
     /**
-     * The ``BezierCurve`` invokes this function
-     * if the control points changed.
+     * The ``BezierCurve`` invokes this function if the control 
+     * points changed. It sends a buffer of the current control
+     * point's positions.
+     * @param buffer contains the new points as a `Vector3`
      */
-    controlPointsChanged(): void;
+    controlPoints(buffer: Array<Vector3>): void;
 
     /**
      * The ``BezierCurve`` invokes this function
-     * if the resolution changed.
+     * if the ``controlPolygon`` is toggled.
      */
-    resolutionChanged(): void;
+    controlPolygon(state: boolean): void;
 }
 
+/**
+ * ``BezierCurve`` governs all values in respect to the 
+ * curve itself (curve line and control polygon).
+ */
 export class BezierCurve extends Group {
 
     private _resolution: number;
@@ -49,7 +59,7 @@ export class BezierCurve extends Group {
     public set controlPolygon(points: Array<Vector3>) {
         this._controlPolygon.data = points;
         this._curve.data = BezierGenerator.generateBezierCurve(points, this.resolution);
-        this._observers.forEach(obs => obs.controlPointsChanged());
+        this._observers.forEach(obs => obs.controlPoints(points));
     }
 
     /**
@@ -67,7 +77,6 @@ export class BezierCurve extends Group {
     public set resolution(resolution: number) {
         this._resolution = resolution;
         this._curve.data = BezierGenerator.generateBezierCurve(this.controlPoints(), this.resolution);
-        this._observers.forEach(obs => obs.resolutionChanged());
     }
 
     /**
@@ -75,11 +84,15 @@ export class BezierCurve extends Group {
      */
     public toggleControlPolygon(): void {
         let idx = this.children.findIndex(obj => obj === this._controlPolygon);
+        let state = false;
         if (idx != -1) {
             this.children = this.children.filter((_, jdx) => idx !== jdx);
         } else {
             this.add(this._controlPolygon);
+            state = true;
         }
+        this._observers.forEach(obs => obs.controlPolygon(state));
+
     }
 
     /**

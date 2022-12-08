@@ -1,33 +1,26 @@
 import { Group, Vector3 } from "three";
-import { BezierGenerator } from "../core/bezierGenerator";
+import { BezierGenerator } from "../generators/bezierGenerator";
 import { Canvas } from "../core/canvas";
-import { primaryColor, primaryColorMax, secondaryColor } from "../core/color";
-import { Line } from "../core/line";
-import { Point } from "../core/point";
+import { primaryColor, primaryColorMax } from "../core/color";
+import { CustomLine } from "../core/customLine";
+import { CustomPoint, Shape } from "../core/customPoint";
 import { Controller } from "./controller";
+import { BezierCurve } from "../components/bezierCurve";
+import { BezierCurveHelper } from "../components/bezierCurveHelper";
 
 
 export class BezierCurveController extends Controller {
 
-    resolution!: number;
     step!: number;
     tangentSize: number;
 
-    curveEssentials: Group;
-    curve: Line;
-    curveControlLine: Line;
-    curveControlPoints: Array<Point>;
-
-    lerpIntermediates!: Group;
-    lerpLines!: Array<Line>;
-
-    lerpCurrentPoint!: Group;
-    lerpPoint!: Point;
-    lerpDerivative!: Line;
+    bezierCurve: BezierCurve;
+    bezierCurveHelper: BezierCurveHelper;
+    bezierCurvePoints: Array<CustomPoint>;
 
     bernsteinGroup!: Group;
-    bernsteinPolynomials!: Array<Line>;
-    bernsteinPoints!: Array<Point>;
+    bernsteinPolynomials!: Array<CustomLine>;
+    bernsteinPoints!: Array<CustomPoint>;
 
     constructor(canvasWidth: () => number, canvasHeight: () => number) {
         super();
@@ -37,103 +30,65 @@ export class BezierCurveController extends Controller {
         this.canvas.push(new Canvas(canvasWidth, canvasHeight, false));
 
         // 2. set basic variables
-        this.resolution = 100;
         this.step = .5;
         this.tangentSize = 5;
 
-        // 3. create curve essentials
-        this.curveEssentials = new Group();
-        console.log(this.curveEssentials.name);
+        // 3. create curve
+        this.bezierCurve = new BezierCurve();
+        this.canvas[0].append(this.bezierCurve);
 
-        this.curve = new Line();
-        this.curve.name = "curve";
-        this.curveEssentials.add(this.curve);
+        this.bezierCurveHelper = new BezierCurveHelper();
+        this.bezierCurve.register(this.bezierCurveHelper);
+        this.canvas[0].append(this.bezierCurveHelper);
 
-        this.curveControlLine = new Line();
-        this.curveControlLine.name = "curveControlLine";
-        this.curveEssentials.add(this.curveControlLine);
-
-        this.curveControlPoints = new Array<Point>();
+        // 4. create control points
+        this.bezierCurvePoints = new Array<CustomPoint>();
         const positions = [
             new Vector3(-10, -10, 0),
             new Vector3(0, 10, 0),
             new Vector3(10, -30, 0),
             new Vector3(-12, -15, 0),
         ];
+
         for (let idx = 0; idx < 4; idx++) {
-            let point = new Point("cube", 1);
-            point.updatePosition(positions[idx]);
+            let point = new CustomPoint(Shape.CUBE, 1);
+            point.setPosition(positions[idx]);
 
-            point.dragUpdate = () => this.needsUpdate = true;
+            point.dragUpdate = () => this.changed();
             point.color = primaryColor[idx];
-            point.name = `curveControlPoint${idx}`;
 
-            this.curveControlPoints.push(point);
-            this.curveEssentials.add(point);
+            this.bezierCurvePoints.push(point);
+            this.canvas[0].append(point);
             this.canvas[0].draggable(point);
         }
 
-        this.canvas[0].append(this.curveEssentials);
-
-        this.createLerpGroup();
         this.createBernsteinGroup();
-    }
 
-    private createLerpGroup() {
-        this.lerpCurrentPoint?.removeFromParent();
-        this.lerpIntermediates?.removeFromParent();
-
-        const points = this.controlPoints();
-
-        this.lerpCurrentPoint = new Group();
-        this.lerpIntermediates = new Group();
-
-        this.lerpPoint = new Point("", .25);
-        this.lerpPoint.meshMaterial.wireframe = false;
-        this.lerpPoint.color = secondaryColor[0];
-        this.lerpCurrentPoint.add(this.lerpPoint);
-
-        this.lerpDerivative = new Line();
-        this.lerpDerivative.color = secondaryColor[1];
-        this.lerpDerivative.renderOrder = 10;
-        this.lerpCurrentPoint.add(this.lerpDerivative);
-
-        this.lerpLines = new Array<Line>();
-        BezierGenerator.calculateIntermediates(points, this.step)
-            .forEach(data => {
-                const line = new Line();
-                line.data = data;
-                line.color = secondaryColor[2];
-                this.lerpLines.push(line);
-                this.lerpIntermediates.add(line);
-            });
-
-        this.canvas[0].append(this.lerpCurrentPoint);
-        this.canvas[0].append(this.lerpIntermediates);
+        this.changed();
     }
 
     private createBernsteinGroup() {
         this.bernsteinGroup?.removeFromParent();
 
-        const points = this.controlPoints();
+        const points = this.controlPointPositions();
 
-        const coefficients = BezierGenerator.generateBasisFunctions(points.length, this.resolution);
+        const coefficients = BezierGenerator.generateBasisFunctions(points.length, this.bezierCurve.resolution);
         this.bernsteinGroup = new Group();
 
-        this.bernsteinPolynomials = new Array<Line>();
+        this.bernsteinPolynomials = new Array<CustomLine>();
         coefficients.forEach(coefficient => {
-            const line = new Line();
+            const line = new CustomLine();
             line.data = coefficient
-                .map((y, x) => new Vector3(x / this.resolution, y, 0));
+                .map((y, x) => new Vector3(x / this.bezierCurve.resolution, y, 0));
             this.bernsteinPolynomials.push(line);
             this.bernsteinGroup.add(line);
         });
 
-        this.bernsteinPoints = new Array<Point>();
+        this.bernsteinPoints = new Array<CustomPoint>();
         for (let idx = 0; idx < coefficients.length; idx++) {
-            let point = new Point("point", .025);
+            let point = new CustomPoint(Shape.SPHERE, .025);
             point.color = primaryColor[idx];
-            point.meshMaterial.wireframe = false;
+            point.wireframe = false;
             this.bernsteinPoints.push(point);
             this.bernsteinGroup.add(point);
         }
@@ -147,26 +102,13 @@ export class BezierCurveController extends Controller {
      * objects that determine the drawn curve.
      */
     override update(): void {
-        const points = this.controlPoints();
+        const points = this.controlPointPositions();
 
         if (this.needsUpdate) {
-            this.curve.data = BezierGenerator.generateBezierCurve(points, this.resolution);
-            this.curveControlLine.data = points;
-
+            let cp = this.bezierCurvePoints.map(p => p.position.clone());
+            this.bezierCurve.controlPolygon = cp;
             this.needsUpdate = false;
         }
-
-        BezierGenerator.calculateIntermediates(points, this.step)
-            .forEach((v, i) => this.lerpLines[i].data = v);
-
-        this.lerpPoint.updatePosition(BezierGenerator.evaluatePoint(points, this.step));
-
-        const dp = BezierGenerator.evaluateDerivative(points, this.step).normalize();
-        dp.multiplyScalar(this.tangentSize);
-        this.lerpDerivative.data = [
-            this.lerpPoint.position,
-            this.lerpPoint.position.clone().add(dp)
-        ];
 
         BezierGenerator.calculateCoefficients(points.length - 1, this.step)
             .forEach((c, idx) => {
@@ -175,20 +117,23 @@ export class BezierCurveController extends Controller {
     }
 
     override gui(gui: dat.GUI): void {
-        const folder = gui.addFolder("Bezier Curve Controller");
-        folder.add(this, "resolution", 16, 256, 2)
-            .onChange(() => this.needsUpdate = true).name("Resolution");
-        folder.add(this, "step", 0, 1, .01).name("t (time)");
+        const bezierCurve = gui.addFolder("Bezier Curve")
+        bezierCurve.open();
+        bezierCurve.add(this.bezierCurve, "resolution", 16, 256, 2)
+            .name("Resolution").onChange(() => this.changed());
+        bezierCurve.add(this.bezierCurve, "toggleControlPolygon")
+            .name("Toggle Control Polygon");
 
-        const points = folder.addFolder("Bezier Curve Control Points");
-        points.add(this, "addPoint").name("Add Control Point");
-        points.add(this, "removePoint").name("Remove Control Point");
-
-        const point = folder.addFolder("Bezier Curve Helper");
-        point.add(this, "toggleControlPolygon").name("Toggle Control Polygon");
-        point.add(this, "toggleLerpIntermediates").name("Toggle Lerp Intermediates");
-        point.add(this, "toggleLerpCurrentPoint").name("Toggle Current Point");
-        point.add(this, "tangentSize", 1, 10, .1).name("Tangent Magnitude");
+        const bezierCurveHelper = gui.addFolder("Bezier Curve Helper");
+        bezierCurveHelper.open();
+        bezierCurveHelper.add(this.bezierCurveHelper, "t", 0, 1, .01)
+            .name("t (step)").onChange(v=>this.step = v)
+        bezierCurveHelper.add(this.bezierCurveHelper, "tangentMagnitude", 1, 20, 1)
+            .name("Tangent Magnitude");
+        bezierCurveHelper.add(this.bezierCurveHelper, "toggleIntermediates")
+            .name("Toggle Intermediates");
+        bezierCurveHelper.add(this.bezierCurveHelper, "toggleCurrentPoint")
+            .name("Toggle Current Point");
     }
 
 
@@ -197,18 +142,18 @@ export class BezierCurveController extends Controller {
      * extend the list of points.
      */
     private addPoint(): void {
-        if (this.curveControlPoints.length == primaryColorMax) {
+        if (this.bezierCurvePoints.length == primaryColorMax) {
             return;
         }
 
-        let point = new Point("cube", 1);
-        point.updatePosition(new Vector3());
+        let point = new CustomPoint("cube", 1);
+        point.setPosition(new Vector3());
 
         point.dragUpdate = () => this.needsUpdate = true;
-        point.color = primaryColor[this.curveControlPoints.length];
-        point.name = `curveControlPoint${this.curveControlPoints.length}`;
+        point.color = primaryColor[this.bezierCurvePoints.length];
+        point.name = `curveControlPoint${this.bezierCurvePoints.length}`;
 
-        this.curveControlPoints.push(point);
+        this.bezierCurvePoints.push(point);
         this.curveEssentials.add(point);
         this.canvas[0].draggable(point);
 
@@ -223,56 +168,18 @@ export class BezierCurveController extends Controller {
      * pop the lsit of points.
      */
     private removePoint(): void {
-        if (this.curveControlPoints.length > 2) {
-            const point = this.curveControlPoints.pop();
+        if (this.bezierCurvePoints.length > 2) {
+            const point = this.bezierCurvePoints.pop();
             point?.removeFromParent();
             this.needsUpdate = true;
-
-            this.createLerpGroup();
             this.createBernsteinGroup();
-        }
-    }
-
-    /**
-     * `toggleControlPolygon` is an Ui function.  It allows the user
-     * to enable or disable the control polygon.
-     */
-    private toggleControlPolygon(): void {
-        if (this.canvas[0].contains(this.curveControlLine)) {
-            this.curveControlLine.removeFromParent();
-        } else {
-            this.canvas[0].append(this.curveControlLine);
-        }
-    }
-
-    /**
-     * `toggleLerpIntermediates` is an Ui function.  It allows the user
-     * to enable or disable the lerp intermediates.
-     */
-    private toggleLerpIntermediates(): void {
-        if (this.canvas[0].contains(this.lerpIntermediates)) {
-            this.lerpIntermediates.removeFromParent();
-        } else {
-            this.canvas[0].append(this.lerpIntermediates);
-        }
-    }
-
-    /**
-     * `toggleLerpCurrentPoint` is an Ui function.  It allows the user
-     * to enable or disable the lerp intermediates.
-     */
-    private toggleLerpCurrentPoint(): void {
-        if (this.canvas[0].contains(this.lerpCurrentPoint)) {
-            this.lerpCurrentPoint.removeFromParent();
-        } else {
-            this.canvas[0].append(this.lerpCurrentPoint);
         }
     }
 
     /**
      * Helper function.
      */
-    private controlPoints(): Array<Vector3> {
-        return this.curveControlPoints.map(point => point.position.clone())
+    private controlPointPositions(): Array<Vector3> {
+        return this.bezierCurvePoints.map(point => point.position.clone())
     }
 }  

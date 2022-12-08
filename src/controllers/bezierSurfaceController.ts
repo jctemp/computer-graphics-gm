@@ -1,20 +1,20 @@
 import { GUI } from "dat.gui";
 import { AmbientLight, DirectionalLight, Group } from "three";
-import { BezierGenerator } from "../core/bezierGenerator";
+import { BezierGenerator } from "../generators/bezierGenerator";
 import { Canvas } from "../core/canvas";
-import { Line } from "../core/line";
+import { CustomLine } from "../core/customLine";
 import { Plane } from "../core/plane";
-import { Point } from "../core/point";
+import { CustomPoint, Shape } from "../core/customPoint";
 import { Controller } from "./controller";
 
 
 export class BezierSurfaceController extends Controller {
 
     controlGroup!: Group;
-    controlPoints!: Array<Array<Point>>;
-    controlPointsT!: Array<Array<Point>>;
-    controlLinesX!: Array<Line>;
-    controlLinesY!: Array<Line>;
+    controlPoints!: Array<Array<CustomPoint>>;
+    controlPointsT!: Array<Array<CustomPoint>>;
+    controlLinesX!: Array<CustomLine>;
+    controlLinesY!: Array<CustomLine>;
     controlNeedsUpdate: boolean;
     controlResolutionX: number;
     controlResolutionY: number;
@@ -25,7 +25,7 @@ export class BezierSurfaceController extends Controller {
     surfaceMeshResolutionY: number;
 
     derivativeGroup: Group;
-    derivativeNormal: Line;
+    derivativeNormal: CustomLine;
     derivativeX: number;
     derivativeY: number;
 
@@ -61,7 +61,7 @@ export class BezierSurfaceController extends Controller {
         this.derivativeX = .4;
         this.derivativeY = .4;
 
-        this.derivativeNormal = new Line();
+        this.derivativeNormal = new CustomLine();
         this.derivativeNormal.color = 0x00FF00;
         this.derivativeGroup.add(this.derivativeNormal);
 
@@ -70,10 +70,10 @@ export class BezierSurfaceController extends Controller {
         this.needsUpdate = true;
     }
 
-    private transposePoints(): Array<Array<Point>> {
-        const transposed = new Array<Array<Point>>();
+    private transposePoints(): Array<Array<CustomPoint>> {
+        const transposed = new Array<Array<CustomPoint>>();
         for (let y = 0; y < this.controlResolutionY; y++) {
-            transposed.push(new Array<Point>());
+            transposed.push(new Array<CustomPoint>());
             for (let x = 0; x < this.controlResolutionX; x++) {
                 transposed[y].push(this.controlPoints[x][y]);
             }
@@ -81,7 +81,7 @@ export class BezierSurfaceController extends Controller {
         return transposed;
     }
 
-    private addPoint(point: Point) {
+    private addPoint(point: CustomPoint) {
         point.color = 0xFFFF00;
         point.dragUpdate = () => {
             this.needsUpdate = true;
@@ -95,20 +95,20 @@ export class BezierSurfaceController extends Controller {
         if (this.controlNeedsUpdate) {
             this.controlGroup?.removeFromParent();
             this.controlGroup = new Group();
-            this.controlLinesX = new Array<Line>();
-            this.controlLinesY = new Array<Line>();
-            this.controlPoints = new Array<Array<Point>>();
+            this.controlLinesX = new Array<CustomLine>();
+            this.controlLinesY = new Array<CustomLine>();
+            this.controlPoints = new Array<Array<CustomPoint>>();
 
             this.canvas[0].append(this.controlGroup);
 
             for (let x = 0; x < this.controlResolutionX; x++) {
-                const line = new Line();
+                const line = new CustomLine();
                 this.controlLinesX.push(line);
                 this.controlGroup.add(line);
             }
 
             for (let y = 0; y < this.controlResolutionY; y++) {
-                const line = new Line();
+                const line = new CustomLine();
                 this.controlLinesY.push(line);
                 this.controlGroup.add(line);
             }
@@ -116,10 +116,10 @@ export class BezierSurfaceController extends Controller {
             const xMid = (this.controlResolutionX - 1) / 2;
             const yMid = (this.controlResolutionY - 1) / 2
             for (let x = 0; x < this.controlResolutionX; x++) {
-                this.controlPoints.push(new Array<Point>());
+                this.controlPoints.push(new Array<CustomPoint>());
 
                 for (let y = 0; y < this.controlResolutionY; y++) {
-                    const point = new Point("cube", .5);
+                    const point = new CustomPoint(Shape.CUBE, .5);
                     point.color = 0xFFFF00;
                     point.position.set(4 * (x - xMid), -2 * (x - xMid) ** 2, 4 * (y - yMid));
                     this.controlPoints[x].push(point);
