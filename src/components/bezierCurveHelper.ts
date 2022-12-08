@@ -1,7 +1,7 @@
 import { Group, Vector3 } from "three";
 import { CustomLine } from "../core/customLine";
 import { CustomPoint, Shape } from "../core/customPoint";
-import { BezierGenerator } from "../generators/bezierGenerator";
+import { BezierGenerator } from "../generators/bezier";
 import { BezierCurveObserver } from "./bezierCurve";
 
 // /**

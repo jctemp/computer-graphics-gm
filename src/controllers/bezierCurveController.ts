@@ -1,5 +1,5 @@
 import { Group, Vector3 } from "three";
-import { BezierGenerator } from "../generators/bezierGenerator";
+import { BezierGenerator } from "../generators/bezier";
 import { Canvas } from "../core/canvas";
 import { primaryColor, primaryColorMax } from "../core/color";
 import { CustomLine } from "../core/customLine";
@@ -7,6 +7,7 @@ import { CustomPoint, Shape } from "../core/customPoint";
 import { Controller } from "./controller";
 import { BezierCurve } from "../components/bezierCurve";
 import { BezierCurveHelper } from "../components/bezierCurveHelper";
+import { PolynomialBasisGenerator } from "../generators/polynomialBasis";
 
 
 export class BezierCurveController extends Controller {
@@ -72,7 +73,7 @@ export class BezierCurveController extends Controller {
 
         const points = this.controlPointPositions();
 
-        const coefficients = BezierGenerator.generateBasisFunctions(points.length, this.bezierCurve.resolution);
+        const coefficients = PolynomialBasisGenerator.generateBasisFunctions(points.length, this.bezierCurve.resolution);
         this.bernsteinGroup = new Group();
 
         this.bernsteinPolynomials = new Array<CustomLine>();
@@ -110,7 +111,7 @@ export class BezierCurveController extends Controller {
             this.needsUpdate = false;
         }
 
-        BezierGenerator.calculateCoefficients(points.length - 1, this.step)
+        PolynomialBasisGenerator.calculateCoefficients(points.length - 1, this.step)
             .forEach((c, idx) => {
                 this.bernsteinPoints[idx].position.set(this.step, c, 0);
             });

@@ -1,6 +1,6 @@
 import { Vector3, Group } from "three";
 import { CustomLine } from "../core/customLine";
-import { BezierGenerator } from "../generators/bezierGenerator";
+import { BezierGenerator } from "../generators/bezier";
 
 /**
  * This interface should allow foreign object to get a callback
