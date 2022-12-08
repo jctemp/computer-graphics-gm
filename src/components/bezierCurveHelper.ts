@@ -1,18 +1,12 @@
 import { Group, Vector3 } from "three";
-import { Slot } from "../core/connector";
+import { Signal, Slot } from "../core/connector";
 import { CustomLine } from "../core/customLine";
 import { CustomPoint, Shape } from "../core/customPoint";
 import { BezierGenerator } from "../generators/bezier";
 
-// /**
-//  * This interface should allow foreign object to get a callback
-//  * if a value of the `BezierCurve` changes.
-//  */
-// export interface BezierCurveHelperObserver {
-// }
-
 export class BezierCurveHelper extends Group {
 
+    public signalTimeValue: Signal<number>;
     public slotControlPoints: Slot<Array<Vector3>>;
     public slotControlPolygon: Slot<boolean>;
 
@@ -28,6 +22,8 @@ export class BezierCurveHelper extends Group {
 
     constructor() {
         super();
+
+        this.signalTimeValue = new Signal<number>();
 
         this.slotControlPoints = new Slot<Array<Vector3>>();
         this.slotControlPoints.addCallable(buffer => {
@@ -63,7 +59,10 @@ export class BezierCurveHelper extends Group {
         // NOTE: we could push and pop form the arrays and other 
         // array manipulations. However, this would introduce
         // unnecessary logic making this function overcomplicated.
-        this.children.forEach(child => child.removeFromParent());
+        while (this.children.length > 0) {
+            const child = this.children.pop();
+            child?.removeFromParent();
+        }
 
         this._point = new CustomPoint(Shape.SPHERE, .25);
         this._point.wireframe = false;
@@ -122,6 +121,7 @@ export class BezierCurveHelper extends Group {
     public set t(t: number) {
         this._t = t;
         this.updateHelper();
+        this.signalTimeValue.emit(this._t);
     }
 
     /**

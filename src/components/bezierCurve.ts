@@ -16,6 +16,12 @@ export class BezierCurve extends Group {
     // polygon changes through the toggle.
     public signalControlPolygon: Signal<boolean>;
 
+    // Emits a signal if the resolution changes
+    public signalResolution: Signal<number>;
+
+    // Emits the current length of the controlpoint list.
+    public signalControlPointsCount: Signal<number>;
+
     private _resolution: number;
 
     private _curve: CustomLine;
@@ -26,6 +32,8 @@ export class BezierCurve extends Group {
 
         this.signalControlPoints = new Signal<Array<Vector3>>();
         this.signalControlPolygon = new Signal<boolean>();
+        this.signalControlPointsCount = new Signal<number>();
+        this.signalResolution = new Signal<number>();
 
         this._resolution = 100;
 
@@ -44,6 +52,8 @@ export class BezierCurve extends Group {
         this._controlPolygon.data = points;
         this._curve.data = BezierGenerator.generateBezierCurve(points, this.resolution);
         this.signalControlPoints.emit(points);
+        this.signalControlPointsCount.emit(points.length);
+        this.signalResolution.emit(this.resolution);
     }
 
     /**

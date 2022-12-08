@@ -1,13 +1,12 @@
-import { Group, Vector3 } from "three";
+import { Vector3 } from "three";
 import { Canvas } from "../core/canvas";
 import { primaryColor, primaryColorMax } from "../core/color";
-import { CustomLine } from "../core/customLine";
 import { CustomPoint, Shape } from "../core/customPoint";
 import { Controller } from "./controller";
 import { BezierCurve } from "../components/bezierCurve";
 import { BezierCurveHelper } from "../components/bezierCurveHelper";
-import { PolynomialBasisGenerator } from "../generators/polynomialBasis";
 import { connect } from "../core/connector";
+import { PolynomialBasis } from "../components/polynomialBasis";
 
 
 export class BezierCurveController extends Controller {
@@ -19,9 +18,7 @@ export class BezierCurveController extends Controller {
     bezierCurveHelper: BezierCurveHelper;
     bezierCurvePoints: Array<CustomPoint>;
 
-    bernsteinGroup!: Group;
-    bernsteinPolynomials!: Array<CustomLine>;
-    bernsteinPoints!: Array<CustomPoint>;
+    polynomialBasis: PolynomialBasis;
 
     constructor(canvasWidth: () => number, canvasHeight: () => number) {
         super();
@@ -41,8 +38,14 @@ export class BezierCurveController extends Controller {
         this.bezierCurveHelper = new BezierCurveHelper();
         this.canvas[0].append(this.bezierCurveHelper);
 
+        this.polynomialBasis = new PolynomialBasis();
+        this.canvas[1].append(this.polynomialBasis);
+
         connect(this.bezierCurve.signalControlPoints, this.bezierCurveHelper.slotControlPoints);
-        connect(this.bezierCurve.signalControlPolygon, this.bezierCurveHelper.slotControlPolygon);
+        connect(this.bezierCurve.signalControlPolygon, this.bezierCurveHelper.slotControlPolygon);        
+        connect(this.bezierCurve.signalResolution, this.polynomialBasis.slotResolution);
+        connect(this.bezierCurve.signalControlPointsCount, this.polynomialBasis.slotControlPointsCount);
+        connect(this.bezierCurveHelper.signalTimeValue, this.polynomialBasis.slotTimeValue);
 
         // 4. create control points
         this.bezierCurvePoints = new Array<CustomPoint>();
@@ -65,39 +68,7 @@ export class BezierCurveController extends Controller {
             this.canvas[0].draggable(point);
         }
 
-        this.createBernsteinGroup();
-
         this.changed();
-    }
-
-    private createBernsteinGroup() {
-        this.bernsteinGroup?.removeFromParent();
-
-        const points = this.controlPointPositions();
-
-        const coefficients = PolynomialBasisGenerator.generateBasisFunctions(points.length, this.bezierCurve.resolution);
-        this.bernsteinGroup = new Group();
-
-        this.bernsteinPolynomials = new Array<CustomLine>();
-        coefficients.forEach(coefficient => {
-            const line = new CustomLine();
-            line.data = coefficient
-                .map((y, x) => new Vector3(x / this.bezierCurve.resolution, y, 0));
-            this.bernsteinPolynomials.push(line);
-            this.bernsteinGroup.add(line);
-        });
-
-        this.bernsteinPoints = new Array<CustomPoint>();
-        for (let idx = 0; idx < coefficients.length; idx++) {
-            let point = new CustomPoint(Shape.SPHERE, .025);
-            point.color = primaryColor[idx];
-            point.wireframe = false;
-            this.bernsteinPoints.push(point);
-            this.bernsteinGroup.add(point);
-        }
-
-        this.canvas[1].append(this.bernsteinGroup);
-        this.bernsteinGroup.position.set(-.5, -.5, 0)
     }
 
     /**
@@ -105,18 +76,11 @@ export class BezierCurveController extends Controller {
      * objects that determine the drawn curve.
      */
     override update(): void {
-        const points = this.controlPointPositions();
-
         if (this.needsUpdate) {
             let cp = this.bezierCurvePoints.map(p => p.position.clone());
             this.bezierCurve.controlPolygon = cp;
             this.needsUpdate = false;
         }
-
-        PolynomialBasisGenerator.calculateCoefficients(points.length - 1, this.step)
-            .forEach((c, idx) => {
-                this.bernsteinPoints[idx].position.set(this.step, c, 0);
-            });
     }
 
     override gui(gui: dat.GUI): void {
@@ -149,7 +113,7 @@ export class BezierCurveController extends Controller {
             return;
         }
 
-        let point = new CustomPoint("cube", 1);
+        let point = new CustomPoint(Shape.CUBE, 1);
         point.setPosition(new Vector3());
 
         point.dragUpdate = () => this.needsUpdate = true;
@@ -157,11 +121,7 @@ export class BezierCurveController extends Controller {
         point.name = `curveControlPoint${this.bezierCurvePoints.length}`;
 
         this.bezierCurvePoints.push(point);
-        this.curveEssentials.add(point);
         this.canvas[0].draggable(point);
-
-        this.createLerpGroup();
-        this.createBernsteinGroup();
 
         this.needsUpdate = true;
     }
@@ -175,14 +135,6 @@ export class BezierCurveController extends Controller {
             const point = this.bezierCurvePoints.pop();
             point?.removeFromParent();
             this.needsUpdate = true;
-            this.createBernsteinGroup();
         }
-    }
-
-    /**
-     * Helper function.
-     */
-    private controlPointPositions(): Array<Vector3> {
-        return this.bezierCurvePoints.map(point => point.position.clone())
     }
 }  

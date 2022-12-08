@@ -1,4 +1,4 @@
-export class PolynomialBasisGenerator {
+export class BasisGenerator {
     /**
      * Calculates the Bernstein polynomial function of a basis degree n
      */
@@ -10,7 +10,7 @@ export class PolynomialBasisGenerator {
 
         for (let idx = 0; idx <= resolution; idx++) {
             const t = idx / resolution;
-            const coefficients = PolynomialBasisGenerator.calculateCoefficients(controlPointsCount - 1, t);
+            const coefficients = BasisGenerator.calculateCoefficients(controlPointsCount - 1, t);
             for (let jdx = 0; jdx < controlPointsCount; jdx++) {
                 baseFunctions[jdx].push(coefficients[jdx]);
             }
@@ -29,7 +29,7 @@ export class PolynomialBasisGenerator {
         let coefficients = new Array<number>();
         for (let j = 0; j <= n; j++) {
             coefficients.push(
-                PolynomialBasisGenerator.binomial(n, j) * // n over k
+                BasisGenerator.binomial(n, j) * // n over k
                 (t ** j) *                                // t^j
                 ((1 - t) ** (n - j))                      // (1-t)^(n-j)
             );

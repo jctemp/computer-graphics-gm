@@ -1,4 +1,4 @@
-import { Mesh, BoxGeometry, SphereGeometry, MeshBasicMaterial, Vector3, BufferGeometry } from "three";
+import { Mesh, BoxGeometry, SphereGeometry, MeshBasicMaterial, Vector3 } from "three";
 import { Draggable } from "./canvas";
 
 /**
