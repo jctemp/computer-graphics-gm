@@ -1,6 +1,6 @@
 import { GUI } from "dat.gui";
 import { AmbientLight, DirectionalLight, Group } from "three";
-import { BezierLogic } from "../logic/bezier";
+import { BezierLogic } from "../logic/bezierLogic";
 import { Canvas } from "../core/canvas";
 import { CustomLine } from "../core/customLine";
 import { Plane } from "../core/plane";

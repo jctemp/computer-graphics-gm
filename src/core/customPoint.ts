@@ -37,7 +37,7 @@ export class CustomPoint extends Mesh implements Draggable {
      * it easier to set the new position.
      * @param pos new position
      */
-    public setPosition(pos: Vector3) {
+    public set data(pos: Vector3) {
         this.position.set(pos.x, pos.y, pos.z);
     }
 
