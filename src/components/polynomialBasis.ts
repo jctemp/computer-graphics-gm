@@ -3,7 +3,7 @@ import { primaryColor } from "../core/color";
 import { Slot } from "../core/connector";
 import { CustomLine } from "../core/customLine";
 import { CustomPoint, Shape } from "../core/customPoint";
-import { BasisGenerator } from "../generators/basis";
+import { PolynomialBasisLogic } from "../logic/basis";
 
 export class PolynomialBasis extends Group {
 
@@ -59,7 +59,7 @@ export class PolynomialBasis extends Group {
         grid.setRotationFromAxisAngle(new Vector3(1, 0, 0), Math.PI / 2);
         this.add(grid);
 
-        const coefficients = BasisGenerator
+        const coefficients = PolynomialBasisLogic
             .generateBasisFunctions(this._bezierCurveCount, this._bezierCurveResolution);
 
         coefficients.forEach(coefficient => {
@@ -86,7 +86,7 @@ export class PolynomialBasis extends Group {
      * updatePolynomialBasis
      */
     public updatePolynomialBasis() {
-        BasisGenerator
+        PolynomialBasisLogic
             .calculateCoefficients(this._bezierCurveCount - 1, this._t)
             .forEach((c, idx) => this._bernsteinPoints[idx].position.set(this._t, c, 0));
     }

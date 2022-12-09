@@ -1,7 +1,7 @@
 import { Vector3, Group } from "three";
 import { Signal } from "../core/connector";
 import { CustomLine } from "../core/customLine";
-import { BezierGenerator } from "../generators/bezier";
+import { BezierLogic } from "../logic/bezier";
 
 /**
  * ``BezierCurve`` governs all values in respect to the 
@@ -50,7 +50,7 @@ export class BezierCurve extends Group {
      */
     public set controlPolygon(points: Array<Vector3>) {
         this._controlPolygon.data = points;
-        this._curve.data = BezierGenerator.generateBezierCurve(points, this.resolution);
+        this._curve.data = BezierLogic.generateBezierCurve(points, this.resolution);
         this.signalControlPoints.emit(points);
         this.signalControlPointsCount.emit(points.length);
         this.signalResolution.emit(this.resolution);
@@ -70,7 +70,7 @@ export class BezierCurve extends Group {
      */
     public set resolution(resolution: number) {
         this._resolution = resolution;
-        this._curve.data = BezierGenerator.generateBezierCurve(this.controlPoints(), this.resolution);
+        this._curve.data = BezierLogic.generateBezierCurve(this.controlPoints(), this.resolution);
     }
 
     /**

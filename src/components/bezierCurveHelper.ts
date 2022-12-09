@@ -2,7 +2,7 @@ import { Group, Vector3 } from "three";
 import { Signal, Slot } from "../core/connector";
 import { CustomLine } from "../core/customLine";
 import { CustomPoint, Shape } from "../core/customPoint";
-import { BezierGenerator } from "../generators/bezier";
+import { BezierLogic } from "../logic/bezier";
 
 export class BezierCurveHelper extends Group {
 
@@ -74,7 +74,7 @@ export class BezierCurveHelper extends Group {
         this._pointTangent.renderOrder = 2;
         this.add(this._pointTangent);
 
-        const max = BezierGenerator
+        const max = BezierLogic
             .calculateIntermediates(this._controlPoints, 0).length;
         for (let idx = 0; idx < max; idx++) {
             const line = new CustomLine();
@@ -87,10 +87,10 @@ export class BezierCurveHelper extends Group {
 
     public updateHelper(): void {
 
-        const point = BezierGenerator.evaluatePoint(this._controlPoints, this._t);
+        const point = BezierLogic.evaluatePoint(this._controlPoints, this._t);
         this._point.setPosition(point);
 
-        const derivative = BezierGenerator
+        const derivative = BezierLogic
             .evaluateDerivative(this._controlPoints, this._t)
             .normalize()
             .multiplyScalar(this._tangentMagnitude);
@@ -99,7 +99,7 @@ export class BezierCurveHelper extends Group {
             this._point.position.clone().add(derivative)
         ]
 
-        const intermediates = BezierGenerator
+        const intermediates = BezierLogic
             .calculateIntermediates(this._controlPoints, this._t);
         intermediates.forEach((points, idx) => {
             if (idx < this._intermediates.length) {
