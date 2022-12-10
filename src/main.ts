@@ -4,7 +4,7 @@ import * as dat from 'dat.gui';
 import { Controller } from './controllers/controller';
 import { BezierCurveController } from './controllers/bezierCurveController';
 import { BezierSurfaceController } from './controllers/bezierSurfaceController';
-import { BSplineCurveController } from './splines/bSplineCurveController';
+import { BSplineCurveController } from './splines/controller';
 
 // fetch button elements from the navbar
 const bcurves = document.getElementById("bezier-curve");
