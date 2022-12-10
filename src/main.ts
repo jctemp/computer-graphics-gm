@@ -4,7 +4,7 @@ import * as dat from 'dat.gui';
 import { Controller } from './controllers/controller';
 import { BezierCurveController } from './controllers/bezierCurveController';
 import { BezierSurfaceController } from './controllers/bezierSurfaceController';
-import { BSplineCurveController } from './controllers/bSplineCurveController';
+import { BSplineCurveController } from './splines/bSplineCurveController';
 
 // fetch button elements from the navbar
 const bcurves = document.getElementById("bezier-curve");
@@ -65,7 +65,9 @@ function createBezierSurfaceController(): Controller {
 // procedure to create a bspline controller
 function createBSplineCurveController(): Controller {
     const nav = requestNavElement();
-    const width = () => window.innerWidth;
+    const app = requestAppElement();
+    const gap = getComputedStyle(app).gap.replace("[a-zA-Z]", "");
+    const width = () => (window.innerWidth - Number.parseFloat(gap)) / 2;
     const height = () => window.innerHeight - nav.offsetHeight;
 
     return new BSplineCurveController(width, height);
