@@ -2,7 +2,7 @@ import { Group, Vector3 } from "three";
 import { Canvas } from "../core/canvas";
 import { primaryColor } from "../core/color";
 import { CustomPoint, Shape } from "../core/customPoint";
-import { Controller } from "./controller";
+import { Controller } from "../controllers/controller";
 import { BezierCurve } from "../components/bezierCurve";
 import { BezierCurveHelper } from "../components/bezierCurveHelper";
 import { connect, Signal, Slot } from "../core/connector";
