@@ -15,12 +15,12 @@ export class CustomLine extends THREE.Line {
     }
 
     /**
-     * `data` sets internal buffer to the contents 
+     * `buffer` sets internal buffer to the contents 
      * of the points array. Note: Keeping the vectors's
      * length the same allows to efficiently update the
      * buffer.
      */
-    public set data(points: Array<Vector3>) {
+    public set buffer(points: Array<Vector3>) {
         if (this.length != points.length) {
             // dispose buffer if not undefined
             this.geometry.dispose();

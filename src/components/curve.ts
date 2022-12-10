@@ -15,8 +15,8 @@ export class Curve extends Group {
      * @param controlPoints array with the control points
      */
     public set(curve: Vector3[], controlPoints: Vector3[]): void {
-        this._curve.data = curve;
-        this._controlPolygon.data = controlPoints;
+        this._curve.buffer = curve;
+        this._controlPolygon.buffer = controlPoints;
     }
 
     /**

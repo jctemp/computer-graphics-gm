@@ -40,7 +40,7 @@ export class ControlPoints1d extends Group {
         for (let idx = 0; idx < primaryColor.length; idx++) {
             let point = new CustomPoint(Shape.CUBE, 1);
 
-            point.data = (new Vector3(
+            point.buffer = (new Vector3(
                 randFloat(-10, 10), randFloat(-10, 10), 0));
             point.dragUpdate = () => this.signalMaxChanged.emit(null);
             point.color = primaryColor[this._points.length];

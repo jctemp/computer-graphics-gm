@@ -60,13 +60,13 @@ export class Position extends Group {
         const tangent = this._tangents[idx];
         const intermediate = this._intermediates[idx];
 
-        this._point.data = point;
-        this._tangent.data = [
+        this._point.buffer = point;
+        this._tangent.buffer = [
             point, point.clone()
                 .add(tangent.clone().multiplyScalar(this._magnitude))
         ];
         intermediate.forEach((iteration, idx) => {
-            this._intermediate[idx].data = iteration;
+            this._intermediate[idx].buffer = iteration;
         });
     }
 

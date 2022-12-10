@@ -34,7 +34,7 @@ export class Basis extends Group {
         coefficients.forEach((coeffs, idx) => {
             const line = new CustomLine();
             line.color = primaryColor[idx];
-            line.data = coeffs.map(
+            line.buffer = coeffs.map(
                 (y, x) => new Vector3(x / resolution, y, 0));
             this.add(line);
         });
@@ -48,7 +48,7 @@ export class Basis extends Group {
      * influences of the curves at t.
      */
     public update() {
-        this._bar.data = [
+        this._bar.buffer = [
             new Vector3(this._t, 1),
             new Vector3(this._t, 0)
         ];
