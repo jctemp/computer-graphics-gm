@@ -1,6 +1,6 @@
 import { GUI } from "dat.gui";
 import { AmbientLight, DirectionalLight, Group } from "three";
-import { BezierLogic } from "../logic/bezierLogic";
+import { BezierSurfaceLogic } from "../logic/bezierSurfaceLogic";
 import { Canvas } from "../core/canvas";
 import { CustomLine } from "../core/customLine";
 import { Plane } from "../core/plane";
@@ -146,9 +146,9 @@ export class BezierSurfaceController extends Controller {
             }
 
             const controlPoints = this.controlPoints.map(parr => parr.map(p => p.position.clone()));
-            const positions = BezierLogic.generateBezierSurface(controlPoints,
+            const positions = BezierSurfaceLogic.generateBezierSurface(controlPoints,
                 [this.surfaceMeshResolutionX, this.surfaceMeshResolutionY]);
-            const localCoordinateSystems = BezierLogic.generateBezierSurfaceDerivates(controlPoints,
+            const localCoordinateSystems = BezierSurfaceLogic.generateBezierSurfaceDerivates(controlPoints,
                 [this.surfaceMeshResolutionX, this.surfaceMeshResolutionY]);
             this.surfaceMesh.data(positions, localCoordinateSystems.normals);
 

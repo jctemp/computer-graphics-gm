@@ -3,7 +3,7 @@ import { Canvas } from "../core/canvas";
 import { Controller } from "./controller";
 import { connect, Slot } from "../core/connector";
 import { Basis } from "../components/basis";
-import { BezierLogic } from "../logic/bezierLogic";
+import { BezierCurveLogic } from "../logic/bezierCurveLogic";
 import { Curve } from "../components/curve";
 import { Position } from "../components/position";
 import { ControlPoints1d } from "../components/controlPoints";
@@ -20,7 +20,7 @@ export class BezierCurveController extends Controller {
             }).filter(value => value.x !== Number.MAX_SAFE_INTEGER);
 
             const [points, tangents, intermediates] =
-                BezierLogic.generateCurve(controlPoints, this._curve.resolution);
+                BezierCurveLogic.generateCurve(controlPoints, this._curve.resolution);
 
             this._curve.set(points, controlPoints);
             this._curvePosition.set(points, tangents, intermediates);
