@@ -5,6 +5,7 @@ import { Controller } from './controllers/controller';
 import { BezierCurveController } from './controllers/bezierCurveController';
 import { BezierSurfaceController } from './controllers/bezierSurfaceController';
 import { BSplineCurveController } from './splines/controller';
+import { SplineTest } from './splines/test';
 
 // fetch button elements from the navbar
 const bcurves = document.getElementById("bezier-curve");
@@ -108,3 +109,5 @@ if (bnurbs) {
         controller.gui(gui);
     }
 }
+
+SplineTest.testLogic();
