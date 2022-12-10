@@ -3,24 +3,23 @@ import { AmbientLight, DirectionalLight, Group } from "three";
 import { BezierSurfaceLogic } from "../logic/bezierSurfaceLogic";
 import { Canvas } from "../core/canvas";
 import { CustomLine } from "../core/customLine";
-import { CustomSurface as CustomSurface } from "../core/customSurface";
 import { CustomPoint, Shape } from "../core/customPoint";
 import { Controller } from "./controller";
+import { Surface } from "../components/surface";
 
 
 export class BezierSurfaceController extends Controller {
 
+    private _surface: Surface;
+
     controlGroup!: Group;
     controlPoints!: Array<Array<CustomPoint>>;
     controlPointsT!: Array<Array<CustomPoint>>;
-    controlLinesX!: Array<CustomLine>;
-    controlLinesY!: Array<CustomLine>;
     controlNeedsUpdate: boolean;
     controlResolutionX: number;
     controlResolutionY: number;
 
     surfaceGroup: Group;
-    surfaceMesh: CustomSurface;
     surfaceMeshResolutionX: number;
     surfaceMeshResolutionY: number;
 
@@ -37,6 +36,10 @@ export class BezierSurfaceController extends Controller {
         this.canvas[0].append(new DirectionalLight(0xFFFFFF, .9));
         this.canvas[0].append(new AmbientLight(0x111111));
 
+        // ...
+        this._surface = new Surface();
+        this.canvas[0].append(this._surface);
+
         // 2. set basic variable
         this.controlNeedsUpdate = true;
         this.controlResolutionX = 4;
@@ -49,9 +52,6 @@ export class BezierSurfaceController extends Controller {
         this.surfaceGroup = new Group();
         this.canvas[0].append(this.surfaceGroup);
 
-        this.surfaceMesh = new CustomSurface();
-        this.surfaceGroup.add(this.surfaceMesh);
-
         this.surfaceMeshResolutionX = 10;
         this.surfaceMeshResolutionY = 10;
 
@@ -62,7 +62,7 @@ export class BezierSurfaceController extends Controller {
         this.derivativeY = .4;
 
         this.derivativeNormal = new CustomLine();
-        this.derivativeNormal.color = 0x777777;
+        this.derivativeNormal.color = 0x00FF00;
         this.derivativeGroup.add(this.derivativeNormal);
 
         this.canvas[0].append(this.derivativeGroup);
@@ -95,21 +95,17 @@ export class BezierSurfaceController extends Controller {
         if (this.controlNeedsUpdate) {
             this.controlGroup?.removeFromParent();
             this.controlGroup = new Group();
-            this.controlLinesX = new Array<CustomLine>();
-            this.controlLinesY = new Array<CustomLine>();
             this.controlPoints = new Array<Array<CustomPoint>>();
 
             this.canvas[0].append(this.controlGroup);
 
             for (let x = 0; x < this.controlResolutionX; x++) {
                 const line = new CustomLine();
-                this.controlLinesX.push(line);
                 this.controlGroup.add(line);
             }
 
             for (let y = 0; y < this.controlResolutionY; y++) {
                 const line = new CustomLine();
-                this.controlLinesY.push(line);
                 this.controlGroup.add(line);
             }
 
@@ -133,32 +129,22 @@ export class BezierSurfaceController extends Controller {
         }
 
         if (this.needsUpdate) {
-            for (let x = 0; x < this.controlPoints.length; x++) {
-                const points = this.controlPoints[x]
-                    .map(point => point.position.clone());
-                this.controlLinesX[x].buffer = points;
-            }
-
-            for (let y = 0; y < this.controlResolutionY; y++) {
-                const points = this.controlPointsT[y]
-                    .map(point => point.position.clone());
-                this.controlLinesY[y].buffer = points;
-            }
-
             const controlPoints = this.controlPoints.map(parr => parr.map(p => p.position.clone()));
             const positions = BezierSurfaceLogic.generateBezierSurface(controlPoints,
                 [this.surfaceMeshResolutionX, this.surfaceMeshResolutionY]);
             const localCoordinateSystems = BezierSurfaceLogic.generateBezierSurfaceDerivates(controlPoints,
                 [this.surfaceMeshResolutionX, this.surfaceMeshResolutionY]);
-            this.surfaceMesh.buffer = {
+
+            this._surface.set({
                 positions, normals: localCoordinateSystems.normals
-            };
+            }, controlPoints);
+
 
             this.needsUpdate = false;
         }
 
-        const x = Math.round(this.derivativeX * this.surfaceMeshResolutionX);
-        const y = Math.round(this.derivativeY * this.surfaceMeshResolutionY);
+        // const x = Math.round(this.derivativeX * this.surfaceMeshResolutionX);
+        // const y = Math.round(this.derivativeY * this.surfaceMeshResolutionY);
 
         // const position = this.surfaceMesh.positions[x][y];
         // const normal = this.surfaceMesh.normals[x][y];
@@ -168,7 +154,7 @@ export class BezierSurfaceController extends Controller {
 
     gui(gui: GUI): void {
         const control = gui.addFolder("Control points");
-        control.add(this, "toggleControlPoints").name("Toggle Control Points");
+        control.add(this._surface, "toggleControlMesh").name("Toggle Control Mesh");
         control.add(this, "controlResolutionX", 2, 8, 1).name("X Resolution").onChange(() => this.controlNeedsUpdate = true);
         control.add(this, "controlResolutionY", 2, 8, 1).name("Y Resolution").onChange(() => this.controlNeedsUpdate = true);
 
@@ -185,15 +171,7 @@ export class BezierSurfaceController extends Controller {
             this.changed();
             derivativeY.step(1 / this.surfaceMeshResolutionY);
         });
-        mesh.add(this.surfaceMesh, "wireframe");
-        mesh.addColor(this.surfaceMesh, "color");
-    }
-
-    toggleControlPoints(): void {
-        if (this.canvas[0].contains(this.controlGroup)) {
-            this.controlGroup.removeFromParent();
-        } else {
-            this.canvas[0].append(this.controlGroup);
-        }
+        mesh.add(this._surface.data, "wireframe");
+        mesh.addColor(this._surface.data, "color");
     }
 }

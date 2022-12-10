@@ -1,4 +1,4 @@
-import { BufferAttribute, BufferGeometry, DoubleSide, Mesh, MeshLambertMaterial, MeshNormalMaterial, Vector3 } from "three";
+import { BufferAttribute, BufferGeometry, DoubleSide, Mesh, MeshLambertMaterial, Vector3 } from "three";
 
 
 export class CustomSurface extends Mesh {

@@ -22,9 +22,6 @@ export class CoordinateSystems {
 
 export class BezierSurfaceLogic {
 
-    // ----------------------------------------------------------------------------------------------------------------
-    //  DE CASTELJAU OPERATIONS 
-
     /**
      * Determines the surface based on control points represented as a 2d matrix
      * @param points 2d matrix containing the points
