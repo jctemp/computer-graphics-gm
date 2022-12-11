@@ -77,9 +77,14 @@ export class BezierSurfaceController extends Controller {
         const control = gui.addFolder("Control Objects");
         control.add(this._surface, "toggleControlMesh").name("Toggle Control Mesh");
         control.add(this._controlPoints, "toggleControlPoints").name("Toggle Control Points");
-        control.add(this._controlPoints, "xMax", 3, ControlPoints2d.MAX, 1).name("X Control Points")
-        control.add(this._controlPoints, "yMax", 3, ControlPoints2d.MAX, 1).name("Y Control Points")
-        control.add(this._controlPoints, "plane", { "plane": true, "curve": false }).name("Control Point alignment")
+        control.add(this._controlPoints, "xMax", 3, ControlPoints2d.MAX, 1).name("X Control Points");
+        control.add(this._controlPoints, "yMax", 3, ControlPoints2d.MAX, 1).name("Y Control Points");
+        control.add(this._controlPoints, "plane", { "Plane": true, "Curved Surface": false }).name("Control Point alignment")
+        .onFinishChange((value: string) => {
+            this._controlPoints.plane = (value === "true" ? true : false);
+            this.changed();
+        });
+        
 
         const derivate = gui.addFolder("Surface Point");
         const xderiv = derivate.add(this._surfacePosition, "s", 0, 1, 1 / this._surface.resolution[0]).name("X Derivative");

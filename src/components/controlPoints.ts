@@ -66,7 +66,7 @@ export class ControlPoints2d extends Group {
             for (let idx = 0; idx < this._max[0]; idx++) {
                 for (let jdx = 0; jdx < this._max[1]; jdx++) {
                     const theta = (idx / (this._max[0] - 1)) * .5 * Math.PI + .25 * Math.PI;
-                    const phi = (-jdx / (this._max[1] - 1)) * 2 *  Math.PI;
+                    const phi = (-jdx / (this._max[1] - 1)) * 2 * Math.PI;
 
                     this.points[idx][jdx].buffer = new Vector3(
                         radius * Math.sin(theta) * Math.cos(phi),
@@ -85,8 +85,8 @@ export class ControlPoints2d extends Group {
 
     public signalMaxChanged: Signal<null>;
     public points: CustomPoint[][];
-    public plane: boolean;
 
+    private _plane: boolean;
     private _max: [number, number];
     private _activated: boolean;
 
@@ -106,7 +106,7 @@ export class ControlPoints2d extends Group {
             }
         }
 
-        this.plane = false;
+        this._plane = false;
         this._activated = true;
         this._max = [3, 5];
         this.changePositions();
@@ -121,6 +121,15 @@ export class ControlPoints2d extends Group {
             }
         }
         return pointArr;
+    }
+
+    public get plane(): boolean {
+        return this._plane;
+    }
+
+    public set plane(value: boolean) {
+        this._plane = value;
+        this.changePositions();
     }
 
     public get xMax(): number {

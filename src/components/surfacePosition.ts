@@ -100,8 +100,8 @@ export class SurfacePosition extends Group {
     constructor() {
         super();
 
-        this._s = 0;
-        this._t = 0;
+        this._s = 0.5;
+        this._t = 0.5;
         this._activated = false;
 
         this._points = [];
