@@ -88,6 +88,8 @@ export class SplineLogic {
                 }
                 return 0;
             }
+            if (values[u] < this.translateIndex(knots, index) ||
+                values[u] >= this.translateIndex(knots, index + degree + 1)) return 0;
             // calculate factors for previous N
             let fac1 =  (values[u] - this.translateIndex(knots, index)) / 
                         (this.translateIndex(knots, index + degree) - this.translateIndex(knots, index));
@@ -125,6 +127,7 @@ export class SplineLogic {
             let values = new Array<number>();
             for (let h = 0; h <= resolution; h++) {
                 let k = min + h * step;
+                k = Math.round(k * 10000) / 10000;
                 values.push(k);
             }
 
@@ -137,7 +140,7 @@ export class SplineLogic {
             for (let m = 1; m < degree + 1; m++) {
                 bases.push(Array<Array<number>>())
                 // for each segment
-                for (let idx = 0; idx <= this.getKnotLength(knots) - m; idx++) {
+                for (let idx = 0; idx <= this.getKnotLength(knots) - m - 1; idx++) {
                     bases[m].push(Array<number>());
                     // for each index
                     for (let u = 0; u <= resolution; u++) {
