@@ -7,15 +7,15 @@ import { Controller } from "./controller";
 import { Surface } from "../components/surface";
 import { ControlPoints2d } from "../components/controlPoints";
 import { connect, Slot } from "../core/connector";
+import { SurfacePosition } from "../components/surfacePosition";
 
 
 export class BezierSurfaceController extends Controller {
 
     private _surface: Surface;
     private _controlPoints: ControlPoints2d;
+    private _surfacePosition: SurfacePosition;
     public slotChanged: Slot<null>;
-
-    surfaceGroup: Group;
 
     derivativeGroup: Group;
     derivativeNormal: CustomLine;
@@ -39,14 +39,12 @@ export class BezierSurfaceController extends Controller {
         this._controlPoints.points.forEach(
             arr => arr.forEach(c => this.canvas[0].draggable(c)));
 
+        this._surfacePosition = new SurfacePosition();
+
         this.slotChanged = new Slot<null>();
         this.slotChanged.addCallable(_ => this.changed());
 
         connect(this._controlPoints.signalMaxChanged, this.slotChanged);
-
-        // 4. create mesh
-        this.surfaceGroup = new Group();
-        this.canvas[0].append(this.surfaceGroup);
 
         // 5. derivative
         this.derivativeGroup = new Group();
@@ -99,6 +97,7 @@ export class BezierSurfaceController extends Controller {
         control.add(this._controlPoints, "toggleControlPoints").name("Toggle Control Points");
         control.add(this._controlPoints, "xMax", 3, ControlPoints2d.MAX, 1).name("X Control Points")
         control.add(this._controlPoints, "yMax", 3, ControlPoints2d.MAX, 1).name("Y Control Points")
+        control.add(this._controlPoints, "plane", { "plane": true, "curve": false }).name("Control Point alignment")
 
         const derivate = gui.addFolder("Derivative");
         const derivativeX = derivate.add(this, "derivativeX", 0, 1, 1 / this._surface.resolution[0]).name("X Derivative");

@@ -16,20 +16,23 @@ export class ControlPoints2d extends Group {
             child?.removeFromParent();
         }
 
-        const factor = 4;
-        for (let idx = 0; idx < this._max[0]; idx++) {
-            for (let jdx = 0; jdx < this._max[1]; jdx++) {
-                this.add(this.points[idx][jdx]);
-                point.buffer = new Vector3(
-                    (x * factor) - (ControlPoints2d.MAX * factor / 2),
-                    randFloat(0, 1),
-                    (y * factor) - (ControlPoints2d.MAX * factor / 2));
+        if (this._activated) {
+            for (let idx = 0; idx < this._max[0]; idx++) {
+                for (let jdx = 0; jdx < this._max[1]; jdx++) {
+                    this.add(this.points[idx][jdx]);
+                }
             }
         }
+
         this.signalMaxChanged.emit(null);
     }
 
+    /**
+     * `toggleControlPoints` adds or removes the children from the
+     * renderable set. Only active points are considered.
+     */
     public toggleControlPoints(): void {
+        this._activated = !this._activated;
         if (this.children.length == 0) {
             for (let idx = 0; idx < this._max[0]; idx++) {
                 for (let jdx = 0; jdx < this._max[1]; jdx++) {
@@ -44,14 +47,50 @@ export class ControlPoints2d extends Group {
         }
     }
 
+    /**
+     * `changePosition` is a private utility function to set
+     * the positions of current visible points.
+     */
+    private changePositions(): void {
+        if (this.plane) {
+            const factor = 5;
+            for (let idx = 0; idx < this._max[0]; idx++) {
+                for (let jdx = 0; jdx < this._max[1]; jdx++) {
+                    const x = (idx - (this._max[0] / 2));
+                    const y = (jdx - (this._max[1] / 2));
+                    this.points[idx][jdx].buffer = new Vector3(factor * x, 0, factor * y);
+                }
+            }
+        } else {
+            const radius = 10;
+            for (let idx = 0; idx < this._max[0]; idx++) {
+                for (let jdx = 0; jdx < this._max[1]; jdx++) {
+                    const theta = (idx / (this._max[0] - 1)) * .5 * Math.PI + .25 * Math.PI;
+                    const phi = (jdx / (this._max[1] - 1)) * 2 *  Math.PI;
+
+                    this.points[idx][jdx].buffer = new Vector3(
+                        radius * Math.sin(theta) * Math.cos(phi),
+                        radius * Math.sin(theta) * Math.sin(phi),
+                        radius * Math.cos(theta)
+                    );
+                }
+            }
+        }
+
+
+    }
+
     /// -----------------------------------------------------------------------
     /// CONSTRUCTOR, GETTER and SETTER
 
     public static MAX: number = 10;
 
     public signalMaxChanged: Signal<null>;
-    private _max: [number, number];
     public points: CustomPoint[][];
+    public plane: boolean;
+
+    private _max: [number, number];
+    private _activated: boolean;
 
     constructor() {
         super();
@@ -69,7 +108,10 @@ export class ControlPoints2d extends Group {
             }
         }
 
+        this.plane = false;
+        this._activated = true;
         this._max = [3, 5];
+        this.changePositions();
     }
 
     public get positions(): Vector3[][] {
@@ -94,12 +136,14 @@ export class ControlPoints2d extends Group {
     public set xMax(value: number) {
         const x = Math.max(Math.min(value, ControlPoints2d.MAX), 0);
         this._max[0] = x;
+        this.changePositions();
         this.update();
     }
 
     public set yMax(value: number) {
         const y = Math.max(Math.min(value, ControlPoints2d.MAX), 0);
         this._max[1] = y;
+        this.changePositions();
         this.update();
     }
 }

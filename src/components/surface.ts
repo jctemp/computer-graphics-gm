@@ -21,7 +21,7 @@ export class Surface extends Group {
                 polygon?.removeFromParent();
             } else {
                 const line = new CustomLine();
-                this.add(line);
+                if (this._activated) this.add(line);
                 this._controlPolygons.push(line);
             }
         }
@@ -43,6 +43,7 @@ export class Surface extends Group {
      * renderable set.
      */
     public toggleControlMesh(): void {
+        this._activated = !this._activated;
         if (this.children.length == 1) {
             this._controlPolygons.forEach(p => this.add(p));
         } else {
@@ -56,10 +57,12 @@ export class Surface extends Group {
     private _surface: CustomSurface;
     private _controlPolygons: CustomLine[];
     private _resolution: [number, number];
+    private _activated: boolean;
 
     constructor() {
         super();
 
+        this._activated = true;
         this._surface = new CustomSurface();
         this._resolution = [32, 32];
         this._controlPolygons = [];

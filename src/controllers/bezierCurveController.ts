@@ -5,7 +5,7 @@ import { connect, Slot } from "../core/connector";
 import { Basis } from "../components/basis";
 import { BezierCurveLogic } from "../logic/bezierCurveLogic";
 import { Curve } from "../components/curve";
-import { Position } from "../components/position";
+import { CurvePosition } from "../components/curvePosition";
 import { ControlPoints1d } from "../components/controlPoints";
 
 export class BezierCurveController extends Controller {
@@ -61,7 +61,7 @@ export class BezierCurveController extends Controller {
     /// CONSTRUCTOR, GETTER and SETTER
 
     private _curve: Curve;
-    private _curvePosition: Position;
+    private _curvePosition: CurvePosition;
     private _polynomialBasis: Basis;
     private _controlPoints: ControlPoints1d;
 
@@ -88,7 +88,7 @@ export class BezierCurveController extends Controller {
         this._curve = new Curve();
         this.canvas[0].append(this._curve);
 
-        this._curvePosition = new Position();
+        this._curvePosition = new CurvePosition();
         this.canvas[0].append(this._curvePosition);
 
         this._polynomialBasis = new Basis();

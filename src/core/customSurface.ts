@@ -94,7 +94,7 @@ export class CustomSurface extends Mesh {
     constructor() {
         super();
         this.geometry = new BufferGeometry();
-        this.material = new MeshLambertMaterial({ wireframe: false, color: 0x777777 });
+        this.material = new MeshLambertMaterial({ wireframe: false, color: 0x919191 });
         this.material.side = DoubleSide;
     }
 
