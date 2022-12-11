@@ -1,3 +1,5 @@
+import { Vector3 } from "three";
+
 export class SplineLogic {
 
     /**
@@ -34,6 +36,30 @@ export class SplineLogic {
             return true;
         });
         return u;
+    }
+
+    /**
+     * calculate highest index of a u in the sequence that is not larger than the given value
+     * 
+     * @param knots 
+     * @param u 
+     * @returns index in knot sequence
+     */
+    public static findIndexForU(knots: Array<[number, number]>, u: number): number {
+        let idx = 0;
+        let result = -1;
+        knots.every(value => {
+            if (value[0] < u) {
+                idx += value[1];
+                return true;
+            } else if (value[0] == u) {
+                result = idx + value[1] - 1
+            } else {
+                result = idx--;
+            }
+            return false;
+        });
+        return result;
     }
 
     /**
@@ -169,5 +195,77 @@ export class SplineLogic {
             }
             // return all calculated functions
             return bases;     
+    }
+
+
+
+    /**
+     * calculate curve points for the given knot sequence and control points. does not
+     * check whether control points are of valid length
+     * 
+     * @param knots 
+     * @param controlPoints 
+     * @param degree 
+     * @param resolution 
+     * @returns array containing the Vector3 representation that build the curve
+     */
+    public static calculateCurveWithDeBoor(
+        knots: Array<[number,number]>,
+        controlPoints: Array<Vector3>,
+        degree: number,
+        resolution: number): Array<Vector3> {
+            const curve = new Array<Vector3>();
+
+            // get left and right side values of support interval
+            const lb = this.translateIndex(knots, degree - 1);
+            const ub = this.translateIndex(knots, this.getKnotLength(knots) - degree);
+
+            for (let u = lb; u <= ub; u = Math.round((u + (ub - lb) / resolution) * 10000) / 10000) {
+                // find left side Index I
+                const I = this.findIndexForU(knots, u);
+
+                //calculate mulitplicity of u that is already in the sequence
+                let r = 0;
+                knots.every(value => {
+                    if (value[0] == u) {
+                        r += value[1];
+                        return false;
+                    } 
+                    return true;
+                });
+
+                // create array for de Boor values
+                const ds = new Array<Array<Vector3>>();
+                // pre fill already known values
+                for (let z = 0; z <= r; z++) {
+                    ds.push(new Array<Vector3>());
+                    for (let x = r; x <= degree; x++) {
+                        ds[z].push(controlPoints[I - degree + x].clone());
+                    }
+                }
+
+                // see algorithm 8.1 -> directly written from it
+                for (let k = r + 1; k <= degree; k++) {
+                    ds.push(new Array<Vector3>());
+                    for (let j = 0; j <= degree - k; j++) {
+                        let alpha = (u - this.translateIndex(knots, I - degree + k + j)) /
+                            (this.translateIndex(knots, I + 1 + j) - this.translateIndex(knots, I - degree + k + j));
+                        // prevent NaN / Infinity
+                        if (!isFinite(alpha)) alpha = 0;
+                        // get left side value
+                        const dkj = ds[k - 1][j].clone().multiplyScalar(1 - alpha)
+                        // get right side value
+                        const dkj2 = ds[k - 1][j + 1].clone().multiplyScalar(alpha);
+                        // add values and handle rounding errors
+                        const result = dkj.add(dkj2);
+                        result.multiplyScalar(10000).round().divideScalar(10000);
+                        // add result to end of list
+                        ds[k].push(result);
+                    }
+                }
+                curve.push(ds[degree][0]);
+            }
+            // return calculated array of curve points
+            return curve;
     }
 }

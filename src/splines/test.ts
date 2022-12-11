@@ -1,3 +1,4 @@
+import { Vector3 } from "three";
 import { SplineLogic } from "./logic";
 
 export class SplineTest {
@@ -48,7 +49,14 @@ export class SplineTest {
                 }
             }
         }
-        console.log(functions)
+        
+        // fill dummy control Polygon with values and calculate curve with de Boor
+        const controlPolygon = new Array<Vector3>();
+        abscissae.forEach(() => {
+            controlPolygon.push(new Vector3(1,2,3));
+        });
+        const curve = SplineLogic.calculateCurveWithDeBoor(knots, controlPolygon, 3, 90);
+        // TODO test if truuly correct
 
         // output that tests completed on dev console
         console.log("completed tests for bSpline-functions");
