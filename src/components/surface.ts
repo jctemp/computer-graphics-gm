@@ -10,11 +10,10 @@ export class Surface extends Group {
      * @param surface 
      * @param controlPoints 
      */
-    public set(surface: { positions: Vector3[][], normals: Vector3[][] },
-        controlPoints: Vector3[][]): void {
+    public set(surface: { positions: Vector3[][], normals: Vector3[][], controlPoints: Vector3[][] }): void {
         this._surface.buffer = surface;
 
-        const length = controlPoints.length + controlPoints[0].length;
+        const length = surface.controlPoints.length + surface.controlPoints[0].length;
         while (length !== this._controlPolygons.length) {
             if (length < this._controlPolygons.length) {
                 const polygon = this._controlPolygons.pop();
@@ -26,13 +25,13 @@ export class Surface extends Group {
             }
         }
 
-        for (let idx = 0; idx < controlPoints.length; idx++) {
-            this._controlPolygons[idx].buffer = controlPoints[idx];
+        for (let idx = 0; idx < surface.controlPoints.length; idx++) {
+            this._controlPolygons[idx].buffer = surface.controlPoints[idx];
         }
 
-        for (let idx = controlPoints.length; idx < length; idx++) {
-            const jdx = idx - controlPoints.length;
-            const b = controlPoints.map((_, i) => controlPoints[i][jdx])
+        for (let idx = surface.controlPoints.length; idx < length; idx++) {
+            const jdx = idx - surface.controlPoints.length;
+            const b = surface.controlPoints.map((_, i) => surface.controlPoints[i][jdx])
             this._controlPolygons[idx].buffer = b;
         }
     }

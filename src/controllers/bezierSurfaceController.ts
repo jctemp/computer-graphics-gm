@@ -1,8 +1,7 @@
 import { GUI } from "dat.gui";
-import { AmbientLight, DirectionalLight, Group } from "three";
+import { AmbientLight, DirectionalLight } from "three";
 import { BezierSurfaceLogic } from "../logic/bezierSurfaceLogic";
 import { Canvas } from "../core/canvas";
-import { CustomLine } from "../core/customLine";
 import { Controller } from "./controller";
 import { Surface } from "../components/surface";
 import { ControlPoints2d } from "../components/controlPoints";
@@ -58,25 +57,20 @@ export class BezierSurfaceController extends Controller {
                 [this._surface.resolution[0], this._surface.resolution[1]]);
 
             this._surface.set({
-                positions, normals: localCoordinateSystems.normals
-            }, controlPoints);
+                positions, 
+                normals: localCoordinateSystems.normals, 
+                controlPoints
+            });
 
-            this._surfacePosition.set({positions, 
+            this._surfacePosition.set({
+                positions,
                 normals: localCoordinateSystems.normals,
                 tangents: localCoordinateSystems.tangent,
                 bitangents: localCoordinateSystems.bitangent
-            })
+            });
 
             this.needsUpdate = false;
         }
-
-        // const x = Math.round(this.derivativeX * this.surfaceMeshResolutionX);
-        // const y = Math.round(this.derivativeY * this.surfaceMeshResolutionY);
-
-        // const position = this.surfaceMesh.positions[x][y];
-        // const normal = this.surfaceMesh.normals[x][y];
-
-        // this.derivativeNormal.buffer = [position, position.clone().add(normal.normalize())];
     }
 
     gui(gui: GUI): void {
@@ -88,18 +82,22 @@ export class BezierSurfaceController extends Controller {
         control.add(this._controlPoints, "plane", { "plane": true, "curve": false }).name("Control Point alignment")
 
         const derivate = gui.addFolder("Surface Point");
-        derivate.add(this._surfacePosition, "s", 0, 1, 1 / this._surface.resolution[0]).name("X Derivative");
-        derivate.add(this._surfacePosition, "t", 0, 1, 1 / this._surface.resolution[1]).name("Y Derivative");
+        const xderiv = derivate.add(this._surfacePosition, "s", 0, 1, 1 / this._surface.resolution[0]).name("X Derivative");
+        const yderiv = derivate.add(this._surfacePosition, "t", 0, 1, 1 / this._surface.resolution[1]).name("Y Derivative");
         derivate.add(this._surfacePosition, "toggleSurfacePoint").name("Toggle Surface Position");
 
         const mesh = gui.addFolder("Mesh");
         mesh.add(this._surface.resolution, "0", 32, 256, 1).name("X Resolution").onChange(() => {
             this.changed();
+            xderiv.step(1 / this._surface.resolution[0]);
         });
         mesh.add(this._surface.resolution, "1", 32, 256, 1).name("Y Resolution").onChange(() => {
             this.changed();
+            yderiv.step(1 / this._surface.resolution[1]);
         });
         mesh.add(this._surface.data, "wireframe");
         mesh.addColor(this._surface.data, "color");
+
+
     }
 }

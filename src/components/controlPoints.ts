@@ -66,7 +66,7 @@ export class ControlPoints2d extends Group {
             for (let idx = 0; idx < this._max[0]; idx++) {
                 for (let jdx = 0; jdx < this._max[1]; jdx++) {
                     const theta = (idx / (this._max[0] - 1)) * .5 * Math.PI + .25 * Math.PI;
-                    const phi = (jdx / (this._max[1] - 1)) * 2 *  Math.PI;
+                    const phi = (-jdx / (this._max[1] - 1)) * 2 *  Math.PI;
 
                     this.points[idx][jdx].buffer = new Vector3(
                         radius * Math.sin(theta) * Math.cos(phi),

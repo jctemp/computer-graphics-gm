@@ -2,15 +2,30 @@ import { Group, Vector3 } from "three";
 import { CustomLine } from "../core/customLine";
 import { CustomPoint, Shape } from "../core/customPoint";
 
+/**
+ * The `SurfacePosition` class does represent two aspects regarding
+ * a `Surface` point: The current point at s and t with the corresponding
+ * normal, tangent and bitangent.
+ */
 export class SurfacePosition extends Group {
 
-    public set(param: {positions: Vector3[][], normals: Vector3[][],
-        tangents: Vector3[][], bitangents: Vector3[][]}): void {
+    /**
+     * `set` is a function that changes the internal values to provide
+     * a lookup for `update()` as the params `s` and `t` changes.
+     * @param positions all positons of the surface
+     * @param normals the normals for a corresponding position
+     * @param tangents the tangents for a corresponding position
+     * @param bitangents the bitangents for a corresponding position
+     */
+    public set(params: {
+        positions: Vector3[][], normals: Vector3[][],
+        tangents: Vector3[][], bitangents: Vector3[][]
+    }): void {
 
-        this._points = param.positions;
-        this._normals = param.normals;
-        this._tangents = param.tangents;
-        this._bitangents = param.bitangents;
+        this._points = params.positions;
+        this._normals = params.normals;
+        this._tangents = params.tangents;
+        this._bitangents = params.bitangents;
 
         while (this.children.length > 0) {
             const child = this.children.pop();
@@ -27,9 +42,13 @@ export class SurfacePosition extends Group {
         this.update();
     }
 
+    /**
+     * `update` sets the values for the point, normal, tangent and bitangent based
+     * on the current `t` and `s` value.
+     */
     public update(): void {
-        const x = Math.floor((this._points[0].length - 1) * this._s);
-        const y = Math.floor((this._points.length - 1) * this._t);
+        const x = Math.floor((this._points.length - 1) * this._t);
+        const y = Math.floor((this._points[0].length - 1)  * this._s);
 
         const point = this._points[x][y];
         const normal = this._normals[x][y];
@@ -42,9 +61,11 @@ export class SurfacePosition extends Group {
         this._bitangent.buffer = [point, point.clone().add(bitangent.clone().normalize())];
     }
 
+    /**
+     * The `toggleSurfacePoint` function adds or removes all objects from the
+     * renderable set.
+     */
     public toggleSurfacePoint(): void {
-        console.log("==");
-        
         this._activated = !this._activated;
         if (this.children.length === 0) {
             this.add(this._point);
