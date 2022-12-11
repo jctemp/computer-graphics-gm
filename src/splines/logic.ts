@@ -88,6 +88,7 @@ export class SplineLogic {
                 }
                 return 0;
             }
+            // return 0 if u lies outside it's support 
             if (values[u] < this.translateIndex(knots, index) ||
                 values[u] >= this.translateIndex(knots, index + degree + 1)) return 0;
             // calculate factors for previous N
