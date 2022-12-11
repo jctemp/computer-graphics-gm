@@ -80,25 +80,32 @@ export class SplineLogic {
         u: number,
         values: Array<number>,
         prev: Array<Array<number>>): number {
-            // if curve degree is 0 -> different calculation (not recursive)
+            // pre calculate
+            const uOfI = this.translateIndex(knots, index);
+            const uOfIPlus1 = this.translateIndex(knots, index + 1);
+            // CASE 1: degree is 0 -> different calculation
             if (degree == 0) {
-                if (values[u] < this.translateIndex(knots, index + 1) && 
-                    values[u] >= this.translateIndex(knots, index)) {
+                if (values[u] < uOfIPlus1 && values[u] >= uOfI) {
                         return 1;
                 }
                 return 0;
             }
-            // return 0 if u lies outside it's support 
-            if (values[u] < this.translateIndex(knots, index) ||
-                values[u] >= this.translateIndex(knots, index + degree + 1)) return 0;
-            // calculate factors for previous N
-            let fac1 =  (values[u] - this.translateIndex(knots, index)) / 
-                        (this.translateIndex(knots, index + degree) - this.translateIndex(knots, index));
-            let fac2 =  (this.translateIndex(knots, index + degree + 1) - values[u]) / 
-                        (this.translateIndex(knots, index + degree + 1) - this.translateIndex(knots, index + 1));
+
+            // pre calculate 
+            const uOfIplusDegreePlus1 = this.translateIndex(knots, index + degree + 1); 
+            // CASE 2: u lies outside it's support -> return 0
+            if (values[u] < uOfI || values[u] >= uOfIplusDegreePlus1) return 0;
+            
+            // CASE 3: else calculate factors from previous N
+            // pre calculate
+            const uOfIplusDegree = this.translateIndex(knots, index + degree);
+            // calculate alpha values
+            let fac1 = (values[u] - uOfI) / (uOfIplusDegree - uOfI);
+            let fac2 = (uOfIplusDegreePlus1 - values[u]) / (uOfIplusDegreePlus1 - uOfIPlus1);
             // prevent e.g. dividing by 0 (which happens)
             if(!isFinite(fac1)) fac1 = 0;
             if(!isFinite(fac2)) fac2 = 0;
+            // return sum of previous N (with factor alpha)
             return fac1 * prev[index][u] + fac2 * prev[index+1][u];
     }
 

@@ -70,7 +70,7 @@ export class BSplineCurveController extends Controller {
 
     bezierCurve: BezierCurve;
     bezierCurveHelper: BezierCurveHelper;
-    polynomialBasis: SplineBasis;
+    splineBasis: SplineBasis;
 
     controlPoints: ControlPoints;
     slotChanged: Slot<null>;
@@ -98,13 +98,14 @@ export class BSplineCurveController extends Controller {
         this.bezierCurveHelper = new BezierCurveHelper();
         this.canvas[0].append(this.bezierCurveHelper);
 
-        this.polynomialBasis = new SplineBasis();
-        this.canvas[1].append(this.polynomialBasis);
+        this.splineBasis = new SplineBasis();
+        this.canvas[1].append(this.splineBasis);
 
         connect(this.bezierCurve.signalControlPoints, this.bezierCurveHelper.slotControlPoints);
         connect(this.bezierCurve.signalControlPolygon, this.bezierCurveHelper.slotControlPolygon);
-        connect(this.bezierCurve.signalResolution, this.polynomialBasis.slotResolution);
-        
+        connect(this.bezierCurve.signalResolution, this.splineBasis.slotResolution);
+    
+
         this.changed();
     }
 
