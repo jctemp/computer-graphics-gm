@@ -17,11 +17,6 @@ export class BezierSurfaceController extends Controller {
     private _surfacePosition: SurfacePosition;
     public slotChanged: Slot<null>;
 
-    derivativeGroup: Group;
-    derivativeNormal: CustomLine;
-    derivativeX: number;
-    derivativeY: number;
-
     constructor(canvasWidth: () => number, canvasHeight: () => number) {
         super();
 
@@ -40,23 +35,12 @@ export class BezierSurfaceController extends Controller {
             arr => arr.forEach(c => this.canvas[0].draggable(c)));
 
         this._surfacePosition = new SurfacePosition();
+        this.canvas[0].append(this._surfacePosition);
 
         this.slotChanged = new Slot<null>();
         this.slotChanged.addCallable(_ => this.changed());
 
         connect(this._controlPoints.signalMaxChanged, this.slotChanged);
-
-        // 5. derivative
-        this.derivativeGroup = new Group();
-
-        this.derivativeX = .4;
-        this.derivativeY = .4;
-
-        this.derivativeNormal = new CustomLine();
-        this.derivativeNormal.color = 0x00FF00;
-        this.derivativeGroup.add(this.derivativeNormal);
-
-        this.canvas[0].append(this.derivativeGroup);
 
         this.needsUpdate = true;
     }
@@ -66,7 +50,6 @@ export class BezierSurfaceController extends Controller {
         if (this.needsUpdate) {
 
             this._controlPoints.update();
-
             let controlPoints = this._controlPoints.positions;
 
             const positions = BezierSurfaceLogic.generateBezierSurface(controlPoints,
@@ -78,6 +61,11 @@ export class BezierSurfaceController extends Controller {
                 positions, normals: localCoordinateSystems.normals
             }, controlPoints);
 
+            this._surfacePosition.set({positions, 
+                normals: localCoordinateSystems.normals,
+                tangents: localCoordinateSystems.tangent,
+                bitangents: localCoordinateSystems.bitangent
+            })
 
             this.needsUpdate = false;
         }
@@ -99,18 +87,17 @@ export class BezierSurfaceController extends Controller {
         control.add(this._controlPoints, "yMax", 3, ControlPoints2d.MAX, 1).name("Y Control Points")
         control.add(this._controlPoints, "plane", { "plane": true, "curve": false }).name("Control Point alignment")
 
-        const derivate = gui.addFolder("Derivative");
-        const derivativeX = derivate.add(this, "derivativeX", 0, 1, 1 / this._surface.resolution[0]).name("X Derivative");
-        const derivativeY = derivate.add(this, "derivativeY", 0, 1, 1 / this._surface.resolution[1]).name("Y Derivative");
+        const derivate = gui.addFolder("Surface Point");
+        derivate.add(this._surfacePosition, "s", 0, 1, 1 / this._surface.resolution[0]).name("X Derivative");
+        derivate.add(this._surfacePosition, "t", 0, 1, 1 / this._surface.resolution[1]).name("Y Derivative");
+        derivate.add(this._surfacePosition, "toggleSurfacePoint").name("Toggle Surface Position");
 
         const mesh = gui.addFolder("Mesh");
         mesh.add(this._surface.resolution, "0", 32, 256, 1).name("X Resolution").onChange(() => {
             this.changed();
-            derivativeX.step(1 / this._surface.resolution[0]);
         });
         mesh.add(this._surface.resolution, "1", 32, 256, 1).name("Y Resolution").onChange(() => {
             this.changed();
-            derivativeY.step(1 / this._surface.resolution[1]);
         });
         mesh.add(this._surface.data, "wireframe");
         mesh.addColor(this._surface.data, "color");
