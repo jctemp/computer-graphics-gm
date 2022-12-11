@@ -46,7 +46,7 @@ export class SplineTest {
             k = Math.round(k * 10000) / 10000;
             values.push(k);
         }
-        for (let degree = 1; degree < functions.length; degree++) {
+        for (let degree = 0; degree < functions.length; degree++) {
             for (let i = 0; i <= resolution; i++) {
                 let sum = 0;
                 functions[degree].forEach(v => sum += v[i]);
