@@ -29,16 +29,20 @@ export class SplineTest {
             if (compareValues[idx] != abscissae[idx]) throw new Error("abscissae evaluation failed");
         }
 
+        // test base function calculation method
         let functions = SplineLogic.generateBaseFunctions(knots, degree, resolution);
+        // test whether all calculated base functions sum up to 1 (are affine)
+        // i = degree
+        // j = u
         for (let i = 0; i < resolution; i++) {
             for (let j = 1; j < functions.length - 1; j++) {
                 let sum = 0;
                 functions[j].forEach(v => sum += v[j]);
-                //if (sum > 1 + epsilon || sum < 1 - epsilon) throw new Error("calculating base functions failed");    
+                if (sum > 1 + epsilon || sum < 1 - epsilon) throw new Error("calculating base functions failed");    
             }
         }
-        console.log(functions[functions.length - 1])
 
+        // output that tests completed on dev console
         console.log("completed tests for bSpline-functions");
     }
 }
