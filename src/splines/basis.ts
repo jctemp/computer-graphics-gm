@@ -58,7 +58,7 @@ export class SplineBasis extends Group {
         }
 
         // TODO make this a default value of divisions?
-        const grid = new GridHelper(1, this._resolution + 1, 0x444444, 0x222222);
+        const grid = new GridHelper(1, this._resolution, 0x444444, 0x222222);
         grid.position.set(0.5, 0.5, 0);
         grid.setRotationFromAxisAngle(new Vector3(1, 0, 0), Math.PI / 2);
         this.add(grid);
