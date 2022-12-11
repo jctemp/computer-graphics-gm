@@ -63,8 +63,6 @@ export class SplineBasis extends Group {
         let test = new Array<[number,number]>([0,3],[1,1],[2,2],[4,1],[5,1],[7,3])
         let basises = SplineLogic.generateBaseFunctions(test, 5, this._bezierCurveResolution)
         const coefficients = basises[basises.length - 1];
-        console.log("number of bases: " + coefficients.length)
-        console.log(coefficients)
 
         coefficients.forEach(coefficient => {
             const line = new CustomLine();
