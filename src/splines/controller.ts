@@ -8,6 +8,7 @@ import { BezierCurveHelper } from "../components/bezierCurveHelper";
 import { connect, Signal, Slot } from "../core/connector";
 import { PolynomialBasis } from "../components/polynomialBasis";
 import { randFloat } from "three/src/math/MathUtils";
+import { SplineBasis } from "./basis";
 
 class ControlPoints extends Group {
 
@@ -70,7 +71,7 @@ export class BSplineCurveController extends Controller {
 
     bezierCurve: BezierCurve;
     bezierCurveHelper: BezierCurveHelper;
-    polynomialBasis: PolynomialBasis;
+    polynomialBasis: SplineBasis;
 
     controlPoints: ControlPoints;
     slotChanged: Slot<null>;
@@ -98,7 +99,7 @@ export class BSplineCurveController extends Controller {
         this.bezierCurveHelper = new BezierCurveHelper();
         this.canvas[0].append(this.bezierCurveHelper);
 
-        this.polynomialBasis = new PolynomialBasis();
+        this.polynomialBasis = new SplineBasis();
         this.canvas[1].append(this.polynomialBasis);
 
         connect(this.bezierCurve.signalControlPoints, this.bezierCurveHelper.slotControlPoints);
