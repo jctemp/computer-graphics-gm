@@ -77,8 +77,8 @@ export class Surface extends Group {
 
     public set resolution(value: [number, number]) {
         this._resolution = [
-            Math.max(32, Math.min(1024, value[0])),
-            Math.max(32, Math.min(1024, value[1]))
+            Math.max(32, Math.min(256, value[0])),
+            Math.max(32, Math.min(256, value[1]))
         ];
     }
 

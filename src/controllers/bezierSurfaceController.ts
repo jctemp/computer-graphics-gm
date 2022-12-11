@@ -3,25 +3,19 @@ import { AmbientLight, DirectionalLight, Group } from "three";
 import { BezierSurfaceLogic } from "../logic/bezierSurfaceLogic";
 import { Canvas } from "../core/canvas";
 import { CustomLine } from "../core/customLine";
-import { CustomPoint, Shape } from "../core/customPoint";
 import { Controller } from "./controller";
 import { Surface } from "../components/surface";
+import { ControlPoints2d } from "../components/controlPoints";
+import { connect, Slot } from "../core/connector";
 
 
 export class BezierSurfaceController extends Controller {
 
     private _surface: Surface;
-
-    controlGroup!: Group;
-    controlPoints!: Array<Array<CustomPoint>>;
-    controlPointsT!: Array<Array<CustomPoint>>;
-    controlNeedsUpdate: boolean;
-    controlResolutionX: number;
-    controlResolutionY: number;
+    private _controlPoints: ControlPoints2d;
+    public slotChanged: Slot<null>;
 
     surfaceGroup: Group;
-    surfaceMeshResolutionX: number;
-    surfaceMeshResolutionY: number;
 
     derivativeGroup: Group;
     derivativeNormal: CustomLine;
@@ -40,20 +34,19 @@ export class BezierSurfaceController extends Controller {
         this._surface = new Surface();
         this.canvas[0].append(this._surface);
 
-        // 2. set basic variable
-        this.controlNeedsUpdate = true;
-        this.controlResolutionX = 4;
-        this.controlResolutionY = 6;
+        this._controlPoints = new ControlPoints2d();
+        this.canvas[0].append(this._controlPoints);
+        this._controlPoints.points.forEach(
+            arr => arr.forEach(c => this.canvas[0].draggable(c)));
 
-        // 3. control points
-        this.controlNeedsUpdate = true;
+        this.slotChanged = new Slot<null>();
+        this.slotChanged.addCallable(_ => this.changed());
+
+        connect(this._controlPoints.signalMaxChanged, this.slotChanged);
 
         // 4. create mesh
         this.surfaceGroup = new Group();
         this.canvas[0].append(this.surfaceGroup);
-
-        this.surfaceMeshResolutionX = 10;
-        this.surfaceMeshResolutionY = 10;
 
         // 5. derivative
         this.derivativeGroup = new Group();
@@ -70,70 +63,18 @@ export class BezierSurfaceController extends Controller {
         this.needsUpdate = true;
     }
 
-    private transposePoints(): Array<Array<CustomPoint>> {
-        const transposed = new Array<Array<CustomPoint>>();
-        for (let y = 0; y < this.controlResolutionY; y++) {
-            transposed.push(new Array<CustomPoint>());
-            for (let x = 0; x < this.controlResolutionX; x++) {
-                transposed[y].push(this.controlPoints[x][y]);
-            }
-        }
-        return transposed;
-    }
-
-    private addPoint(point: CustomPoint) {
-        point.color = 0xFFFF00;
-        point.dragUpdate = () => {
-            this.needsUpdate = true;
-        }
-        this.canvas[0].draggable(point);
-        this.controlGroup.add(point);
-    }
-
     update(): void {
 
-        if (this.controlNeedsUpdate) {
-            this.controlGroup?.removeFromParent();
-            this.controlGroup = new Group();
-            this.controlPoints = new Array<Array<CustomPoint>>();
-
-            this.canvas[0].append(this.controlGroup);
-
-            for (let x = 0; x < this.controlResolutionX; x++) {
-                const line = new CustomLine();
-                this.controlGroup.add(line);
-            }
-
-            for (let y = 0; y < this.controlResolutionY; y++) {
-                const line = new CustomLine();
-                this.controlGroup.add(line);
-            }
-
-            const xMid = (this.controlResolutionX - 1) / 2;
-            const yMid = (this.controlResolutionY - 1) / 2
-            for (let x = 0; x < this.controlResolutionX; x++) {
-                this.controlPoints.push(new Array<CustomPoint>());
-
-                for (let y = 0; y < this.controlResolutionY; y++) {
-                    const point = new CustomPoint(Shape.CUBE, .5);
-                    point.color = 0xEEEE00;
-                    point.position.set(4 * (x - xMid), -2 * (x - xMid) ** 2, 4 * (y - yMid));
-                    this.controlPoints[x].push(point);
-                    this.addPoint(point);
-                }
-            }
-
-            this.controlPointsT = this.transposePoints();
-            this.controlNeedsUpdate = false;
-            this.needsUpdate = true;
-        }
-
         if (this.needsUpdate) {
-            const controlPoints = this.controlPoints.map(parr => parr.map(p => p.position.clone()));
+
+            this._controlPoints.update();
+
+            let controlPoints = this._controlPoints.positions;
+
             const positions = BezierSurfaceLogic.generateBezierSurface(controlPoints,
-                [this.surfaceMeshResolutionX, this.surfaceMeshResolutionY]);
+                [this._surface.resolution[0], this._surface.resolution[1]]);
             const localCoordinateSystems = BezierSurfaceLogic.generateBezierSurfaceDerivates(controlPoints,
-                [this.surfaceMeshResolutionX, this.surfaceMeshResolutionY]);
+                [this._surface.resolution[0], this._surface.resolution[1]]);
 
             this._surface.set({
                 positions, normals: localCoordinateSystems.normals
@@ -153,23 +94,24 @@ export class BezierSurfaceController extends Controller {
     }
 
     gui(gui: GUI): void {
-        const control = gui.addFolder("Control points");
+        const control = gui.addFolder("Control Objects");
         control.add(this._surface, "toggleControlMesh").name("Toggle Control Mesh");
-        control.add(this, "controlResolutionX", 2, 8, 1).name("X Resolution").onChange(() => this.controlNeedsUpdate = true);
-        control.add(this, "controlResolutionY", 2, 8, 1).name("Y Resolution").onChange(() => this.controlNeedsUpdate = true);
+        control.add(this._controlPoints, "toggleControlPoints").name("Toggle Control Points");
+        control.add(this._controlPoints, "xMax", 3, ControlPoints2d.MAX, 1).name("X Control Points")
+        control.add(this._controlPoints, "yMax", 3, ControlPoints2d.MAX, 1).name("Y Control Points")
 
         const derivate = gui.addFolder("Derivative");
-        const derivativeX = derivate.add(this, "derivativeX", 0, 1, 1 / this.surfaceMeshResolutionX).name("X Derivative");
-        const derivativeY = derivate.add(this, "derivativeY", 0, 1, 1 / this.surfaceMeshResolutionY).name("Y Derivative");
+        const derivativeX = derivate.add(this, "derivativeX", 0, 1, 1 / this._surface.resolution[0]).name("X Derivative");
+        const derivativeY = derivate.add(this, "derivativeY", 0, 1, 1 / this._surface.resolution[1]).name("Y Derivative");
 
         const mesh = gui.addFolder("Mesh");
-        mesh.add(this, "surfaceMeshResolutionX", 8, 96, 1).name("X Resolution").onChange(() => {
+        mesh.add(this._surface.resolution, "0", 32, 256, 1).name("X Resolution").onChange(() => {
             this.changed();
-            derivativeX.step(1 / this.surfaceMeshResolutionX);
+            derivativeX.step(1 / this._surface.resolution[0]);
         });
-        mesh.add(this, "surfaceMeshResolutionY", 8, 96, 1).name("Y Resolution").onChange(() => {
+        mesh.add(this._surface.resolution, "1", 32, 256, 1).name("Y Resolution").onChange(() => {
             this.changed();
-            derivativeY.step(1 / this.surfaceMeshResolutionY);
+            derivativeY.step(1 / this._surface.resolution[1]);
         });
         mesh.add(this._surface.data, "wireframe");
         mesh.addColor(this._surface.data, "color");
