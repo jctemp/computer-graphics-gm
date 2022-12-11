@@ -77,15 +77,15 @@ export class SplineLogic {
         knots: Array<[number, number]>, 
         degree: number,
         index: number,
-        u: number,
-        values: Array<number>,
-        prev: Array<Array<number>>): number {
+        u_value: number,
+        prevN1: number,
+        prevN2: number): number {
             // pre calculate
             const uOfI = this.translateIndex(knots, index);
             const uOfIPlus1 = this.translateIndex(knots, index + 1);
             // CASE 1: degree is 0 -> different calculation
             if (degree == 0) {
-                if (values[u] < uOfIPlus1 && values[u] >= uOfI) {
+                if (u_value < uOfIPlus1 && u_value >= uOfI) {
                         return 1;
                 }
                 return 0;
@@ -94,19 +94,19 @@ export class SplineLogic {
             // pre calculate 
             const uOfIplusDegreePlus1 = this.translateIndex(knots, index + degree + 1); 
             // CASE 2: u lies outside it's support -> return 0
-            if (values[u] < uOfI || values[u] >= uOfIplusDegreePlus1) return 0;
+            if (u_value < uOfI || u_value >= uOfIplusDegreePlus1) return 0;
             
             // CASE 3: else calculate factors from previous N
             // pre calculate
             const uOfIplusDegree = this.translateIndex(knots, index + degree);
             // calculate alpha values
-            let fac1 = (values[u] - uOfI) / (uOfIplusDegree - uOfI);
-            let fac2 = (uOfIplusDegreePlus1 - values[u]) / (uOfIplusDegreePlus1 - uOfIPlus1);
+            let fac1 = (u_value - uOfI) / (uOfIplusDegree - uOfI);
+            let fac2 = (uOfIplusDegreePlus1 - u_value) / (uOfIplusDegreePlus1 - uOfIPlus1);
             // prevent e.g. dividing by 0 (which happens)
             if(!isFinite(fac1)) fac1 = 0;
             if(!isFinite(fac2)) fac2 = 0;
             // return sum of previous N (with factor alpha)
-            return fac1 * prev[index][u] + fac2 * prev[index+1][u];
+            return fac1 * prevN1 + fac2 * prevN2;
     }
 
     /**
@@ -139,22 +139,28 @@ export class SplineLogic {
                 values.push(k);
             }
 
-            // empty placeholder for m = 0;
-            // yes this is a placehodler for the first recursion step
-            // while this wastes space it saves calculation time ...
-            bases.push(Array<Array<number>>())
+            // handle fencepost n = 0, because previous values do not exist
+            bases.push(Array<Array<number>>());
+            for (let idx = 0; idx <= this.getKnotLength(knots) - 1; idx++) {
+                bases[0].push(Array<number>());
+                // for each index
+                for (let u = 0; u <= resolution; u++) {
+                    let value = this.calculateNValue(knots, 0, idx, values[u], 0, 0);
+                    bases[0][idx].push(value);
+                }
+            }
 
             // for each degree
-            for (let m = 1; m < degree + 1; m++) {
+            for (let n = 1; n <= degree; n++) {
                 bases.push(Array<Array<number>>())
                 // for each segment
-                for (let idx = 0; idx <= this.getKnotLength(knots) - m - 1; idx++) {
-                    bases[m].push(Array<number>());
+                for (let idx = 0; idx <= this.getKnotLength(knots) - n - 1; idx++) {
+                    bases[n].push(Array<number>());
                     // for each index
                     for (let u = 0; u <= resolution; u++) {
-                        let value = this.calculateNValue(knots, m - 1, idx, u, values, bases[m - 1]);
-                        bases[m][idx].push(value);
-                    };
+                        let value = this.calculateNValue(knots, n - 1, idx, values[u], bases[n-1][idx][u], bases[n-1][idx+1][u]);
+                        bases[n][idx].push(value);
+                    }
                 }
             }
             // return all calculated functions
