@@ -56,6 +56,29 @@ export class SplineLogic {
         return results;
     }
 
+    /**
+     * calculate (resolution + 1) knot values to insert over the knot interval [min, max]
+     * 
+     * @param knots 
+     * @param resolution 
+     * @returns 
+     */
+    public static generateUValues(
+        knots: Array<[number, number]>, 
+        resolution: number): Array<number> {
+            // get value of least knot
+            let min = knots[0][0];
+            //calculate step size
+            let step = (knots[knots.length - 1][0] - min) / resolution;
+            // calculate u values here to prevent rounding errors
+            let values = new Array<number>();
+            for (let h = 0; h <= resolution; h++) {
+                // round values to assure the last value being the max knot value
+                values.push(Math.round(min + h * step * 10000) / 10000);
+            }
+            return values;
+    }
+
 
 
 
@@ -80,28 +103,20 @@ export class SplineLogic {
         u_value: number,
         prevN1: number,
         prevN2: number): number {
-            // pre calculate
+            // pre calculate u values from indices
             const uOfI = this.translateIndex(knots, index);
-            const uOfIPlus1 = this.translateIndex(knots, index + 1);
-            // CASE 1: degree is 0 -> different calculation
-            if (degree == 0) {
-                if (u_value < uOfIPlus1 && u_value >= uOfI) {
-                        return 1;
-                }
-                return 0;
-            }
-
-            // pre calculate 
             const uOfIplusDegreePlus1 = this.translateIndex(knots, index + degree + 1); 
-            // CASE 2: u lies outside it's support -> return 0
-            if (u_value < uOfI || u_value >= uOfIplusDegreePlus1) return 0;
             
-            // CASE 3: else calculate factors from previous N
-            // pre calculate
-            const uOfIplusDegree = this.translateIndex(knots, index + degree);
-            // calculate alpha values
-            let fac1 = (u_value - uOfI) / (uOfIplusDegree - uOfI);
-            let fac2 = (uOfIplusDegreePlus1 - u_value) / (uOfIplusDegreePlus1 - uOfIPlus1);
+            // CASE 1: u lies outside the support range -> return 0
+            if (u_value < uOfI || u_value >= uOfIplusDegreePlus1) return 0;
+            // degree is 0 -> constant line of 1
+            if (degree == 0) return 1;
+            
+            // CASE 2: calculate from alpha and previous N values
+            let fac1 = (u_value - uOfI) / 
+                (this.translateIndex(knots, index + degree) - uOfI);
+            let fac2 = (uOfIplusDegreePlus1 - u_value) / 
+                (uOfIplusDegreePlus1 - this.translateIndex(knots, index + 1));
             // prevent e.g. dividing by 0 (which happens)
             if(!isFinite(fac1)) fac1 = 0;
             if(!isFinite(fac2)) fac2 = 0;
@@ -124,20 +139,8 @@ export class SplineLogic {
             // array of return values
             const bases = Array<Array<Array<number>>>();
             
-            // get value of least knot
-            let min = knots[0][0];
-            //get value of highest knot
-            let max = knots[knots.length - 1][0];
-            //calculate step size
-            let step = (max - min) / resolution;
-
             // pre calculate u values to prevent rounding errors
-            let values = new Array<number>();
-            for (let h = 0; h <= resolution; h++) {
-                let k = min + h * step;
-                k = Math.round(k * 10000) / 10000;
-                values.push(k);
-            }
+            const values = this.generateUValues(knots, resolution);
 
             // handle fencepost n = 0, because previous values do not exist
             bases.push(Array<Array<number>>());
@@ -145,8 +148,7 @@ export class SplineLogic {
                 bases[0].push(Array<number>());
                 // for each index
                 for (let u = 0; u <= resolution; u++) {
-                    let value = this.calculateNValue(knots, 0, idx, values[u], 0, 0);
-                    bases[0][idx].push(value);
+                    bases[0][idx].push(this.calculateNValue(knots, 0, idx, values[u], 0, 0));
                 }
             }
 
@@ -158,8 +160,10 @@ export class SplineLogic {
                     bases[n].push(Array<number>());
                     // for each index
                     for (let u = 0; u <= resolution; u++) {
-                        let value = this.calculateNValue(knots, n - 1, idx, values[u], bases[n-1][idx][u], bases[n-1][idx+1][u]);
-                        bases[n][idx].push(value);
+                        bases[n][idx].push(
+                            this.calculateNValue(knots, n - 1, idx, values[u], 
+                                bases[n-1][idx][u], bases[n-1][idx+1][u])
+                        );
                     }
                 }
             }

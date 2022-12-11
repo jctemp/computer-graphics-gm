@@ -32,20 +32,8 @@ export class SplineTest {
         // test base function calculation method
         let functions = SplineLogic.generateBaseFunctions(knots, degree+2, resolution);
         // for each degree test whether all functions sum up to 1 inside the support
-        // get value of least knot
-        let min = knots[0][0];
-        //get value of highest knot
-        let max = knots[knots.length - 1][0];
-        //calculate step size
-        let step = (max - min) / resolution;
-
         // pre calculate u values to prevent rounding errors
-        let values = new Array<number>();
-        for (let h = 0; h <= resolution; h++) {
-            let k = min + h * step;
-            k = Math.round(k * 10000) / 10000;
-            values.push(k);
-        }
+        let values = SplineLogic.generateUValues(knots, resolution);
         for (let degree = 0; degree < functions.length; degree++) {
             for (let i = 0; i <= resolution; i++) {
                 let sum = 0;
