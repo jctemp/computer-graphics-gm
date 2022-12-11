@@ -3,68 +3,6 @@ import { Vector3 } from "three";
 
 export class BezierCurveLogic {
 
-
-    /**
-     * Determines an approximation of a curve with n points where n = resolutions 
-     * @param points control points of the curve
-     * @param resolution amount of targeted points 
-     * @returns Generated positions regarding the control point
-     * @deprecated
-     */
-    public static generateBezierCurve(points: Array<THREE.Vector3>, resolution: number): Array<THREE.Vector3> {
-        const curve: Array<THREE.Vector3> = new Array<THREE.Vector3>();
-        for (let idx = 0; idx <= resolution; idx++) {
-            const t = idx / resolution;
-            curve.push(BezierCurveLogic.evaluatePoint(points, t));
-        }
-        return curve;
-    }
-
-    /**
-     * Determines an approximation of a curve with n points where n = resolutions 
-     * @param points control points of the curve
-     * @param resolution amount of targeted points 
-     * @returns Generated positions regarding the control points
-     * @deprecated
-     */
-    public static generateBezierCurveDerivative(points: Array<THREE.Vector3>, resolution: number): Array<THREE.Vector3> {
-        const curve: Array<THREE.Vector3> = new Array<THREE.Vector3>();
-        for (let idx = 0; idx <= resolution; idx++) {
-            const t = idx / resolution;
-            curve.push(BezierCurveLogic.evaluateDerivative(points, t));
-        }
-        return curve;
-    }
-
-    /**
-     * Finds a convex combination which is a point on a curve with degree positions-1
-     * @param points control points of the curve
-     * @param t weight to determine a point (Note: assumed is a normalised value [0,1])
-     * @returns point p_t on the curve. 
-     * @deprecated
-     */
-    public static evaluatePoint(points: Array<THREE.Vector3>, t: number): THREE.Vector3 {
-        while (points.length > 1) {
-            points = BezierCurveLogic.deCasteljauIteration(points, t);
-        }
-        return points[0];
-    }
-
-    /**
-     * Finds the derivate of the curve at a position p.
-     * @param points control points of the curve
-     * @param t weight to determine a point (Note: assumed is a normalised value [0,1])
-     * @returns the derivate at the point p_t on the curve. 
-     * @deprecated
-     */
-    public static evaluateDerivative(points: Array<THREE.Vector3>, t: number): THREE.Vector3 {
-        const n = points.length - 1;
-        while (points.length > 2) {
-            points = BezierCurveLogic.deCasteljauIteration(points, t);
-        }
-        return points[1].sub(points[0]).multiplyScalar(n);
-    }
-
     /**
      * The `generateCurve` function computes `1 / resolution` points on a bezier curve.
      * @param controlPoints initial values for the curve.
@@ -134,5 +72,24 @@ export class BezierCurveLogic {
         for (let i = 0; i < points.length - 1; i++)
             result.push(points[i + 1].clone().sub(points[i]).multiplyScalar(t).add(points[i]));
         return result;
+    }
+
+
+    /**
+     * Determines an approximation of a curve with n points where n = resolutions 
+     * @param points control points of the curve
+     * @param resolution amount of targeted points 
+     * @returns Generated positions regarding the control point
+     */
+    public static generateCurveWithoutTangents(points: Vector3[], resolution: number): Vector3[] {
+        const curve: Vector3[] = [];
+        for (let idx = 0; idx <= resolution; idx++) {
+            const t = idx / resolution;
+            while (points.length > 1) {
+                points = BezierCurveLogic.deCasteljauIteration(points, t);
+            }
+            curve.push(points[0]);
+        }
+        return curve;
     }
 }

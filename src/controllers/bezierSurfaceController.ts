@@ -19,12 +19,10 @@ export class BezierSurfaceController extends Controller {
     constructor(canvasWidth: () => number, canvasHeight: () => number) {
         super();
 
-        // 1. create canvs
         this.canvas.push(new Canvas(canvasWidth, canvasHeight));
         this.canvas[0].append(new DirectionalLight(0xFFFFFF, .9));
         this.canvas[0].append(new AmbientLight(0x111111));
 
-        // ...
         this._surface = new Surface();
         this.canvas[0].append(this._surface);
 
@@ -51,23 +49,11 @@ export class BezierSurfaceController extends Controller {
             this._controlPoints.update();
             let controlPoints = this._controlPoints.positions;
 
-            const positions = BezierSurfaceLogic.generateBezierSurface(controlPoints,
-                [this._surface.resolution[0], this._surface.resolution[1]]);
-            const localCoordinateSystems = BezierSurfaceLogic.generateBezierSurfaceDerivates(controlPoints,
-                [this._surface.resolution[0], this._surface.resolution[1]]);
+            const [positions, normals, tangents, bitangents] =
+                BezierSurfaceLogic.generateSurface(controlPoints, this._surface.resolution);
 
-            this._surface.set({
-                positions, 
-                normals: localCoordinateSystems.normals, 
-                controlPoints
-            });
-
-            this._surfacePosition.set({
-                positions,
-                normals: localCoordinateSystems.normals,
-                tangents: localCoordinateSystems.tangent,
-                bitangents: localCoordinateSystems.bitangent
-            });
+            this._surface.set({ positions, normals, controlPoints });
+            this._surfacePosition.set({ positions, normals, tangents, bitangents });
 
             this.needsUpdate = false;
         }
@@ -80,11 +66,11 @@ export class BezierSurfaceController extends Controller {
         control.add(this._controlPoints, "xMax", 3, ControlPoints2d.MAX, 1).name("X Control Points");
         control.add(this._controlPoints, "yMax", 3, ControlPoints2d.MAX, 1).name("Y Control Points");
         control.add(this._controlPoints, "plane", { "Plane": true, "Curved Surface": false }).name("Control Point alignment")
-        .onFinishChange((value: string) => {
-            this._controlPoints.plane = (value === "true" ? true : false);
-            this.changed();
-        });
-        
+            .onFinishChange((value: string) => {
+                this._controlPoints.plane = (value === "true" ? true : false);
+                this.changed();
+            });
+
 
         const derivate = gui.addFolder("Surface Point");
         const xderiv = derivate.add(this._surfacePosition, "s", 0, 1, 1 / this._surface.resolution[0]).name("X Derivative");
