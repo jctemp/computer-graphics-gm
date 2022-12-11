@@ -125,12 +125,12 @@ export class SplineLogic {
     }
 
     /**
-     * calculate all base functions for the knot sequence up to the given degree
+     * calculate all base functions for the knot sequence up to the given degree.
      * 
      * @param knots 
      * @param degree 
      * @param resolution 
-     * @returns all base function values in an array of [m][j][u]
+     * @returns all base function values in an array of [degree][j][u]
      */
     public static generateBaseFunctions(
         knots: Array<[number, number]>, 

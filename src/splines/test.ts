@@ -12,28 +12,28 @@ export class SplineTest {
         const epsilon = 0.00001;
 
         // test for length calculation
-        let length = SplineLogic.getKnotLength(knots);
+        const length = SplineLogic.getKnotLength(knots);
         if (length != 8) throw new Error("Length assertion failed");
 
         // test for index translation
-        let knotsLong = new Array<number>(0,0,0,1,2,3,3,3);
+        const knotsLong = new Array<number>(0,0,0,1,2,3,3,3);
         for (let idx = 0; idx < length; idx++) {
             let u = SplineLogic.translateIndex(knots, idx);
             if (u != knotsLong[idx]) throw new Error("Index translation failed at: " + idx);
         }
 
         // test for abscissae calculation
-        let abscissae = SplineLogic.generateAbscissae(knots, degree);
+        const abscissae = SplineLogic.generateAbscissae(knots, degree);
         const compareValues = new Array<number>(0,1/3,1,2,8/3,3);
         for (let idx = 0; idx < compareValues.length; idx++) {
             if (compareValues[idx] != abscissae[idx]) throw new Error("abscissae evaluation failed");
         }
 
         // test base function calculation method
-        let functions = SplineLogic.generateBaseFunctions(knots, degree+2, resolution);
+        const functions = SplineLogic.generateBaseFunctions(knots, degree, resolution);
         // for each degree test whether all functions sum up to 1 inside the support
         // pre calculate u values to prevent rounding errors
-        let values = SplineLogic.generateUValues(knots, resolution);
+        const values = SplineLogic.generateUValues(knots, resolution);
         for (let degree = 0; degree < functions.length; degree++) {
             for (let i = 0; i <= resolution; i++) {
                 let sum = 0;
@@ -48,6 +48,7 @@ export class SplineTest {
                 }
             }
         }
+        console.log(functions)
 
         // output that tests completed on dev console
         console.log("completed tests for bSpline-functions");
