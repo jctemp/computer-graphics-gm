@@ -30,15 +30,34 @@ export class SplineTest {
         }
 
         // test base function calculation method
-        let functions = SplineLogic.generateBaseFunctions(knots, degree, resolution);
-        // test whether all calculated base functions sum up to 1 (are affine)
-        // i = degree
-        // j = u
-        for (let i = 0; i < resolution; i++) {
-            for (let j = 1; j < functions.length - 1; j++) {
+        let functions = SplineLogic.generateBaseFunctions(knots, degree+2, resolution);
+        // for each degree test whether all functions sum up to 1 inside the support
+        // get value of least knot
+        let min = knots[0][0];
+        //get value of highest knot
+        let max = knots[knots.length - 1][0];
+        //calculate step size
+        let step = (max - min) / resolution;
+
+        // pre calculate u values to prevent rounding errors
+        let values = new Array<number>();
+        for (let h = 0; h <= resolution; h++) {
+            let k = min + h * step;
+            k = Math.round(k * 10000) / 10000;
+            values.push(k);
+        }
+        for (let degree = 1; degree < functions.length; degree++) {
+            for (let i = 0; i <= resolution; i++) {
                 let sum = 0;
-                functions[j].forEach(v => sum += v[j]);
-                if (sum > 1 + epsilon || sum < 1 - epsilon) throw new Error("calculating base functions failed");    
+                functions[degree].forEach(v => sum += v[i]);
+                // test if current value is inside support range
+                if (values[i] >= SplineLogic.translateIndex(knots, degree) && 
+                    values[i] < SplineLogic.translateIndex(knots, length - degree)) {
+                        // test if value is outside epsilon-radius
+                        if (sum > 1 + epsilon || sum < 1 - epsilon) {
+                            throw new Error("calculating base functions failed");   
+                        } 
+                }
             }
         }
 
