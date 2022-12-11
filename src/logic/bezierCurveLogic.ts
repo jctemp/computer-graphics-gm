@@ -8,7 +8,8 @@ export class BezierCurveLogic {
      * Determines an approximation of a curve with n points where n = resolutions 
      * @param points control points of the curve
      * @param resolution amount of targeted points 
-     * @returns Generated positions regarding the control points 
+     * @returns Generated positions regarding the control point
+     * @deprecated
      */
     public static generateBezierCurve(points: Array<THREE.Vector3>, resolution: number): Array<THREE.Vector3> {
         const curve: Array<THREE.Vector3> = new Array<THREE.Vector3>();
@@ -23,7 +24,8 @@ export class BezierCurveLogic {
      * Determines an approximation of a curve with n points where n = resolutions 
      * @param points control points of the curve
      * @param resolution amount of targeted points 
-     * @returns Generated positions regarding the control points 
+     * @returns Generated positions regarding the control points
+     * @deprecated
      */
     public static generateBezierCurveDerivative(points: Array<THREE.Vector3>, resolution: number): Array<THREE.Vector3> {
         const curve: Array<THREE.Vector3> = new Array<THREE.Vector3>();
