@@ -6,7 +6,6 @@ import { Controller } from "../controllers/controller";
 import { BezierCurve } from "../components/bezierCurve";
 import { BezierCurveHelper } from "../components/bezierCurveHelper";
 import { connect, Signal, Slot } from "../core/connector";
-import { PolynomialBasis } from "../components/polynomialBasis";
 import { randFloat } from "three/src/math/MathUtils";
 import { SplineBasis } from "./basis";
 
@@ -105,9 +104,7 @@ export class BSplineCurveController extends Controller {
         connect(this.bezierCurve.signalControlPoints, this.bezierCurveHelper.slotControlPoints);
         connect(this.bezierCurve.signalControlPolygon, this.bezierCurveHelper.slotControlPolygon);
         connect(this.bezierCurve.signalResolution, this.polynomialBasis.slotResolution);
-        connect(this.bezierCurve.signalControlPointsCount, this.polynomialBasis.slotControlPointsCount);
-        connect(this.bezierCurveHelper.signalTimeValue, this.polynomialBasis.slotTimeValue);
-
+        
         this.changed();
     }
 
@@ -142,8 +139,6 @@ export class BSplineCurveController extends Controller {
         bezierCurve.add(this.bezierCurve, "toggleControlPolygon")
             .name("Toggle Control Polygon");
 
-        bezierCurveHelper.add(this.bezierCurveHelper, "t", 0, 1, .01)
-            .name("t (step)");
         bezierCurveHelper.add(this.bezierCurveHelper, "tangentMagnitude", 1, 20, 1)
             .name("Tangent Magnitude");
         bezierCurveHelper.add(this.bezierCurveHelper, "toggleIntermediates")
