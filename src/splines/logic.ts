@@ -218,7 +218,7 @@ export class SplineLogic {
 
             // get left and right side values of support interval
             const lb = this.translateIndex(knots, degree - 1);
-            const rb = this.translateIndex(knots, this.getKnotLength(knots) - degree + 1);
+            const rb = this.translateIndex(knots, this.getKnotLength(knots) - degree);
             const step = Math.round(((rb - lb) / resolution) * 10000) / 10000;
 
             //call caluclation function for each u inside the support
@@ -246,7 +246,7 @@ export class SplineLogic {
         degree: number,
         u: number): Vector3 {
             // find left side Index I
-            const I = this.findIndexForU(knots, u);
+            const I = this.findIndexForU(knots, u) - 1;
 
             //calculate mulitplicity of u that is already in the sequence
             let r = 0;
@@ -264,7 +264,7 @@ export class SplineLogic {
             for (let z = 0; z <= r; z++) {
                 ds.push(new Array<Vector3>());
                 for (let x = r; x <= degree; x++) {
-                    ds[z].push(controlPoints[I - degree + x].clone());
+                    ds[z].push(controlPoints[I - degree + x + 1].clone());
                 }
             }
 
