@@ -218,9 +218,9 @@ export class SplineLogic {
 
             // get left and right side values of support interval
             const lb = this.translateIndex(knots, degree - 1);
-            const ub = this.translateIndex(knots, this.getKnotLength(knots) - degree);
+            const ub = this.translateIndex(knots, this.getKnotLength(knots) - degree + 1);
 
-            for (let u = lb; u <= ub; u = Math.round((u + (ub - lb) / resolution) * 10000) / 10000) {
+            for (let u = lb; u < ub; u = Math.round((u + (ub - lb) / resolution) * 10000) / 10000) {
                 // find left side Index I
                 const I = this.findIndexForU(knots, u);
 
