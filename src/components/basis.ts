@@ -88,7 +88,8 @@ export class PolyBase extends Basis {
 
 export class SplineBase extends Basis {
     override calc(degree: number, resolution: number, knots: Array<[number, number]>): Array<Array<number>> {
-        const baseFunctions = SplineLogic.generateBaseFunctions(knots, degree, resolution);
-        return baseFunctions[baseFunctions.length - 1];
+        //const baseFunctions = SplineLogic.generateBaseFunctions(knots, degree, resolution);
+        //return baseFunctions[baseFunctions.length - 1];
+        return new Array<Array<number>>();
     }
 }

@@ -3,9 +3,8 @@ import { AmbientLight, DirectionalLight } from "three";
 import { BezierSurfaceLogic } from "../logic/bezierSurfaceLogic";
 import { Canvas } from "../core/canvas";
 import { Controller } from "./controller";
-import { Surface } from "../components/surface";
+import { Surface, SurfacePosition } from "../components/surface";
 import { ControlPoints2d } from "../components/controlPoints";
-import { SurfacePosition } from "../components/surfacePosition";
 
 export class BezierSurfaceController extends Controller {
 

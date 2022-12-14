@@ -4,8 +4,7 @@ import { Controller } from "./controller";
 import { connect } from "../core/connector";
 import { PolyBase } from "../components/basis";
 import { BezierCurveLogic } from "../logic/bezierCurveLogic";
-import { Curve } from "../components/curve";
-import { CurvePosition } from "../components/curvePosition";
+import { Curve, CurvePosition } from "../components/curve";
 import { ControlPoints1d } from "../components/controlPoints";
 
 export class BezierCurveController extends Controller {
