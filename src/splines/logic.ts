@@ -289,7 +289,7 @@ export class SplineLogic {
                     // add values and handle rounding errors
                     const result = dkj.add(dkj2);
                     // TODO should you round here?
-                    //result.multiplyScalar(10000).round().divideScalar(10000);
+                    result.multiplyScalar(10000).round().divideScalar(10000);
                     // add result to end of list
                     ds[k].push(result);
                 }

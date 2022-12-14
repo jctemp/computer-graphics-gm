@@ -50,11 +50,9 @@ export class SplineTest {
             }
         }
         
-        // fill dummy control Polygon with values and calculate curve with de Boor
+        // fill control Polygon with values and calculate curve with de Boor
         const controlPolygon = new Array<Vector3>();
-        // abscissae.forEach(() => {
-        //     controlPolygon.push(new Vector3(1,2,3));
-        // });
+        // fill control polygon
         controlPolygon.push(new Vector3(-6,0,0));
         controlPolygon.push(new Vector3(-4,0,0));
         controlPolygon.push(new Vector3(-2,0,0));
@@ -64,10 +62,11 @@ export class SplineTest {
         controlPolygon.push(new Vector3(8,0,0));
         controlPolygon.push(new Vector3(4,0,0));
         controlPolygon.push(new Vector3(2,0,0));
+        // fill knot sequence
         const knots2 = new Array<[number, number]>([-10,1],[-6,1],[-2,2],[0,1],[4,1],[8,1],[12,1],[16,1],[18,1]);
-        const curve = SplineLogic.calculateCurveWithDeBoor(knots2, controlPolygon, 3, 1000);
-        console.log(curve)
-        // TODO test if truuly correct
+        // run algorithm
+        const curve = SplineLogic.calculateCurveWithDeBoor(knots2, controlPolygon, 2, 22);
+        // TODO find out where 6 is because 6 => 0
 
         // output that tests completed on dev console
         console.log("completed tests for bSpline-functions");
