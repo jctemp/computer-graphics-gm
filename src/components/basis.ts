@@ -2,6 +2,9 @@ import { GridHelper, Group, Vector3 } from "three";
 import { primaryColor } from "../core/color";
 import { Slot } from "../core/connector";
 import { CustomLine } from "../core/customLine";
+// TODO i swear you can do this dynamically
+import { PolynomialBasisLogic } from "../logic/polynomialBasisLogic";
+import { SplineLogic } from "../splines/logic";
 
 /**
  * The `Basis` class describes the polynomial basis of degree n. It creates
@@ -79,21 +82,13 @@ abstract class Basis extends Group {
 
 export class PolyBase extends Basis {
     override calc(degree: number, resolution: number): Array<Array<number>> {
-        let coefficients: number[][] = [];
-        import("../logic/polynomialBasisLogic").then(mod => {
-            coefficients = mod.PolynomialBasisLogic.generateBasis(degree, resolution);
-        });
-        return coefficients;
+        return PolynomialBasisLogic.generateBasis(degree, resolution);
     }
 }
 
 export class SplineBase extends Basis {
     override calc(degree: number, resolution: number, knots: Array<[number, number]>): Array<Array<number>> {
-        let coefficients: number[][] = [];
-        import("../splines/logic").then(mod => {
-            const baseFunctions = mod.SplineLogic.generateBaseFunctions(knots, degree, resolution);
-            coefficients = baseFunctions[baseFunctions.length - 1];
-        });
-        return coefficients;
+        const baseFunctions = SplineLogic.generateBaseFunctions(knots, degree, resolution);
+        return baseFunctions[baseFunctions.length - 1];
     }
 }
