@@ -36,7 +36,7 @@ export class ControlPoints2d extends ControlPoints {
    
     public static MAX: number = 10;
 
-    public points: CustomPoint[][];
+    public _points: CustomPoint[][];
 
     private _plane: boolean;
     private _max: [number, number];
@@ -45,15 +45,15 @@ export class ControlPoints2d extends ControlPoints {
     constructor() {
         super();
 
-        this.points = [];
+        this._points = [];
         for (let x = 0; x < ControlPoints2d.MAX; x++) {
-            this.points.push([]);
+            this._points.push([]);
             for (let y = 0; y < ControlPoints2d.MAX; y++) {
                 let point = new CustomPoint(Shape.CUBE, 1);
                 point.dragUpdate = () => this.signalMaxChanged.emit(null);
                 point.color = 0xEEEE00;
 
-                this.points[x].push(point);
+                this._points[x].push(point);
             }
         }
 
@@ -68,7 +68,7 @@ export class ControlPoints2d extends ControlPoints {
         for (let idx = 0; idx < this._max[0]; idx++) {
             pointArr.push([]);
             for (let jdx = 0; jdx < this._max[1]; jdx++) {
-                pointArr[idx].push(this.points[idx][jdx].position.clone());
+                pointArr[idx].push(this._points[idx][jdx].position.clone());
             }
         }
         return pointArr;
@@ -118,7 +118,7 @@ export class ControlPoints2d extends ControlPoints {
         if (this.children.length == 0) {
             for (let idx = 0; idx < this._max[0]; idx++) {
                 for (let jdx = 0; jdx < this._max[1]; jdx++) {
-                    this.add(this.points[idx][jdx]);
+                    this.add(this._points[idx][jdx]);
                 }
             }
         } else {
@@ -140,7 +140,7 @@ export class ControlPoints2d extends ControlPoints {
                 for (let jdx = 0; jdx < this._max[1]; jdx++) {
                     const x = (idx - (this._max[0] / 2));
                     const y = (jdx - (this._max[1] / 2));
-                    this.points[idx][jdx].buffer = new Vector3(factor * x, 0, factor * y);
+                    this._points[idx][jdx].buffer = new Vector3(factor * x, 0, factor * y);
                 }
             }
         } else {
@@ -150,7 +150,7 @@ export class ControlPoints2d extends ControlPoints {
                     const theta = (idx / (this._max[0] - 1)) * .5 * Math.PI + .25 * Math.PI;
                     const phi = (-jdx / (this._max[1] - 1)) * 2 * Math.PI;
 
-                    this.points[idx][jdx].buffer = new Vector3(
+                    this._points[idx][jdx].buffer = new Vector3(
                         radius * Math.sin(theta) * Math.cos(phi),
                         radius * Math.sin(theta) * Math.sin(phi),
                         radius * Math.cos(theta)
@@ -177,7 +177,7 @@ export class ControlPoints2d extends ControlPoints {
         if (this._activated) {
             for (let idx = 0; idx < this._max[0]; idx++) {
                 for (let jdx = 0; jdx < this._max[1]; jdx++) {
-                    this.add(this.points[idx][jdx]);
+                    this.add(this._points[idx][jdx]);
                 }
             }
         }
