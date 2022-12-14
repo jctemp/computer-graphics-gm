@@ -3,11 +3,10 @@ import { Canvas } from "../core/canvas";
 import { primaryColor } from "../core/color";
 import { CustomPoint, Shape } from "../core/customPoint";
 import { Controller } from "../controllers/controller";
-import { BezierCurve } from "../components/bezierCurve";
-import { BezierCurveHelper } from "../components/bezierCurveHelper";
 import { connect, Signal, Slot } from "../core/connector";
 import { randFloat } from "three/src/math/MathUtils";
 import { SplineBasis } from "./basis";
+import { Curve } from "../components/curve";
 
 class ControlPoints extends Group {
 
@@ -55,7 +54,7 @@ class ControlPoints extends Group {
      */
     private addPoint(position: Vector3): CustomPoint {
         let point = new CustomPoint(Shape.CUBE, 1);
-        point.setPosition(position);
+        point.buffer = position;
 
         point.dragUpdate = () => this.signalChanged.emit(null);
         point.color = primaryColor[this._points.length];
@@ -68,8 +67,7 @@ class ControlPoints extends Group {
 
 export class BSplineCurveController extends Controller {
 
-    bezierCurve: BezierCurve;
-    bezierCurveHelper: BezierCurveHelper;
+    bezierCurve: Curve;
     splineBasis: SplineBasis;
 
     controlPoints: ControlPoints;
@@ -92,17 +90,12 @@ export class BSplineCurveController extends Controller {
         connect(this.controlPoints.signalChanged, this.slotChanged);
 
         // 3. create curve
-        this.bezierCurve = new BezierCurve();
+        this.bezierCurve = new Curve();
         this.canvas[0].append(this.bezierCurve);
-
-        this.bezierCurveHelper = new BezierCurveHelper();
-        this.canvas[0].append(this.bezierCurveHelper);
 
         this.splineBasis = new SplineBasis();
         this.canvas[1].append(this.splineBasis);
 
-        connect(this.bezierCurve.signalControlPoints, this.bezierCurveHelper.slotControlPoints);
-        connect(this.bezierCurve.signalControlPolygon, this.bezierCurveHelper.slotControlPolygon);
         connect(this.bezierCurve.signalResolution, this.splineBasis.slotResolution);
     
 
@@ -121,31 +114,23 @@ export class BSplineCurveController extends Controller {
                 else
                     return new Vector3(Number.MAX_SAFE_INTEGER);
             }).filter(value => value.x !== Number.MAX_SAFE_INTEGER);
-            this.bezierCurve.controlPolygon = cp;
+            
+
             this.needsUpdate = false;
         }
     }
 
     override gui(gui: dat.GUI): void {
         const bezierCurve = gui.addFolder("Bezier Curve")
-        const bezierCurveHelper = gui.addFolder("Bezier Curve Helper");
         const controlPoints = gui.addFolder("Control Points");
 
         bezierCurve.open();
-        bezierCurveHelper.open();
         controlPoints.open();
 
         bezierCurve.add(this.bezierCurve, "resolution", 16, 256, 2)
             .name("Resolution").onChange(() => this.changed());
         bezierCurve.add(this.bezierCurve, "toggleControlPolygon")
             .name("Toggle Control Polygon");
-
-        bezierCurveHelper.add(this.bezierCurveHelper, "tangentMagnitude", 1, 20, 1)
-            .name("Tangent Magnitude");
-        bezierCurveHelper.add(this.bezierCurveHelper, "toggleIntermediates")
-            .name("Toggle Intermediates");
-        bezierCurveHelper.add(this.bezierCurveHelper, "toggleCurrentPoint")
-            .name("Toggle Current Point");
 
         controlPoints.add(this.controlPoints, "max", 2, this.controlPoints._points.length, 1);
     }

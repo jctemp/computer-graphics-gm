@@ -70,7 +70,7 @@ export class SplineBasis extends Group {
         const coefficients = basises[basises.length - 1];
         coefficients.forEach(coefficient => {
             const line = new CustomLine();
-            line.data = coefficient
+            line.buffer = coefficient
                 .map((y, x) => new Vector3(x / this._resolution, y, 0));
             this.add(line);
         });
