@@ -27,9 +27,7 @@ abstract class Basis extends Group {
 
         this.add(this._bar);
 
-        const coefficients = PolynomialBasisLogic
-            .generateBasis(degree, resolution);
-
+        const coefficients = this.calc(degree, resolution, knots);
         coefficients.forEach((coeffs, idx) => {
             const line = new CustomLine();
             line.color = primaryColor[idx];
