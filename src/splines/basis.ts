@@ -75,12 +75,6 @@ export class SplineBasis extends Group {
             this.add(line);
         });
 
-        let abscissae = SplineLogic.generateAbscissae(this._knots, this._order - 1);
-        console.log("abscissae: " + abscissae.length);
-        console.log("coefficients: " + coefficients.length);
-
-        console.log(abscissae)
-
         /* show all basises */
         // basises.forEach(coefficients => {
         //     coefficients.forEach(coefficient => {
