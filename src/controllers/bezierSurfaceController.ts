@@ -5,7 +5,7 @@ import { Canvas } from "../core/canvas";
 import { Controller } from "./controller";
 import { Surface } from "../components/surface";
 import { ControlPoints2d } from "../components/controlPoints";
-import { connect, Slot } from "../core/connector";
+import { connect } from "../core/connector";
 import { SurfacePosition } from "../components/surfacePosition";
 
 export class BezierSurfaceController extends Controller {
@@ -15,10 +15,7 @@ export class BezierSurfaceController extends Controller {
     /// ----------------------------------------------------------------------- 
 
     private _surface: Surface;
-    private _controlPoints: ControlPoints2d;
     private _surfacePosition: SurfacePosition;
-
-    public slotChanged: Slot<null>;
 
     constructor(canvasWidth: () => number, canvasHeight: () => number) {
         super();
@@ -31,7 +28,7 @@ export class BezierSurfaceController extends Controller {
         // 2. control points
         this._controlPoints = new ControlPoints2d();
         this.canvas[0].append(this._controlPoints);
-        this._controlPoints.points.forEach(
+        (this._controlPoints as ControlPoints2d).points.forEach(
             arr => arr.forEach(c => this.canvas[0].draggable(c)));
 
         // 3. surface
@@ -40,10 +37,6 @@ export class BezierSurfaceController extends Controller {
 
         this._surfacePosition = new SurfacePosition();
         this.canvas[0].append(this._surfacePosition);
-
-        // 4. slots
-        this.slotChanged = new Slot<null>();
-        this.slotChanged.addCallable(_ => this.changed());
 
         connect(this._controlPoints.signalMaxChanged, this.slotChanged);
 
@@ -59,7 +52,7 @@ export class BezierSurfaceController extends Controller {
         if (this.needsUpdate) {
 
             this._controlPoints.update();
-            let controlPoints = this._controlPoints.positions;
+            let controlPoints = (this._controlPoints as ControlPoints2d).positions;
 
             const [positions, normals, tangents, bitangents] =
                 BezierSurfaceLogic.generateSurface(controlPoints, this._surface.resolution);
@@ -80,7 +73,7 @@ export class BezierSurfaceController extends Controller {
         control.add(this._controlPoints, "yMax", 3, ControlPoints2d.MAX, 1).name("Y Control Points");
         control.add(this._controlPoints, "plane", { "Plane": true, "Curved Surface": false }).name("Control Point alignment")
             .onFinishChange((value: string) => {
-                this._controlPoints.plane = (value === "true" ? true : false);
+                (this._controlPoints as ControlPoints2d).plane = (value === "true" ? true : false);
                 this.changed();
             });
 
