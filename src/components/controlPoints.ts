@@ -4,87 +4,39 @@ import { Signal } from "../core/connector";
 import { CustomPoint, Shape } from "../core/customPoint";
 import { primaryColor } from "../core/color";
 
-export class ControlPoints2d extends Group {
-
-    /**
-     * The `update` function add all points until max to the
-     * renderable set.
-     */
-    public update(): void {
-        while (this.children.length > 0) {
-            const child = this.children.pop();
-            child?.removeFromParent();
-        }
-
-        if (this._activated) {
-            for (let idx = 0; idx < this._max[0]; idx++) {
-                for (let jdx = 0; jdx < this._max[1]; jdx++) {
-                    this.add(this.points[idx][jdx]);
-                }
-            }
-        }
-
-        this.signalMaxChanged.emit(null);
-    }
-
-    /**
-     * `toggleControlPoints` adds or removes the children from the
-     * renderable set. Only active points are considered.
-     */
-    public toggleControlPoints(): void {
-        this._activated = !this._activated;
-        if (this.children.length == 0) {
-            for (let idx = 0; idx < this._max[0]; idx++) {
-                for (let jdx = 0; jdx < this._max[1]; jdx++) {
-                    this.add(this.points[idx][jdx]);
-                }
-            }
-        } else {
-            while (this.children.length > 0) {
-                const child = this.children.pop();
-                child?.removeFromParent();
-            }
-        }
-    }
-
-    /**
-     * `changePosition` is a private utility function to set
-     * the positions of current visible points.
-     */
-    private changePositions(): void {
-        if (this.plane) {
-            const factor = 5;
-            for (let idx = 0; idx < this._max[0]; idx++) {
-                for (let jdx = 0; jdx < this._max[1]; jdx++) {
-                    const x = (idx - (this._max[0] / 2));
-                    const y = (jdx - (this._max[1] / 2));
-                    this.points[idx][jdx].buffer = new Vector3(factor * x, 0, factor * y);
-                }
-            }
-        } else {
-            const radius = 10;
-            for (let idx = 0; idx < this._max[0]; idx++) {
-                for (let jdx = 0; jdx < this._max[1]; jdx++) {
-                    const theta = (idx / (this._max[0] - 1)) * .5 * Math.PI + .25 * Math.PI;
-                    const phi = (-jdx / (this._max[1] - 1)) * 2 * Math.PI;
-
-                    this.points[idx][jdx].buffer = new Vector3(
-                        radius * Math.sin(theta) * Math.cos(phi),
-                        radius * Math.sin(theta) * Math.sin(phi),
-                        radius * Math.cos(theta)
-                    );
-                }
-            }
-        }
-    }
+/**
+ * abstract super class for any kind of control point objects
+ */
+export abstract class ControlPoints extends Group {
 
     /// -----------------------------------------------------------------------
     /// CONSTRUCTOR, GETTER and SETTER
+    /// -----------------------------------------------------------------------
+   
+    public signalMaxChanged: Signal<null>;
 
+    constructor() {
+        super();
+
+        this.signalMaxChanged = new Signal<null>();
+    }
+
+    /// -----------------------------------------------------------------------
+    /// ABSTRACT FUNCTIONS FOR OVERRIDE
+    /// -----------------------------------------------------------------------
+
+    abstract update(): void;
+}
+
+export class ControlPoints2d extends ControlPoints {
+
+    /// -----------------------------------------------------------------------
+    /// CONSTRUCTOR, GETTER and SETTER
+    /// -----------------------------------------------------------------------
+   
     public static MAX: number = 10;
 
-    public signalMaxChanged: Signal<null>;
-    public points: CustomPoint[][];
+    public _points: CustomPoint[][];
 
     private _plane: boolean;
     private _max: [number, number];
@@ -92,17 +44,16 @@ export class ControlPoints2d extends Group {
 
     constructor() {
         super();
-        this.signalMaxChanged = new Signal<null>();
 
-        this.points = [];
+        this._points = [];
         for (let x = 0; x < ControlPoints2d.MAX; x++) {
-            this.points.push([]);
+            this._points.push([]);
             for (let y = 0; y < ControlPoints2d.MAX; y++) {
                 let point = new CustomPoint(Shape.CUBE, 1);
                 point.dragUpdate = () => this.signalMaxChanged.emit(null);
                 point.color = 0xEEEE00;
 
-                this.points[x].push(point);
+                this._points[x].push(point);
             }
         }
 
@@ -117,7 +68,7 @@ export class ControlPoints2d extends Group {
         for (let idx = 0; idx < this._max[0]; idx++) {
             pointArr.push([]);
             for (let jdx = 0; jdx < this._max[1]; jdx++) {
-                pointArr[idx].push(this.points[idx][jdx].position.clone());
+                pointArr[idx].push(this._points[idx][jdx].position.clone());
             }
         }
         return pointArr;
@@ -153,40 +104,107 @@ export class ControlPoints2d extends Group {
         this.changePositions();
         this.update();
     }
-}
 
-/**
- * The `ControlPoints1d` class manages a set of control points
- * which are used to determine the shape of a curve.
- */
-export class ControlPoints1d extends Group {
+    /// -----------------------------------------------------------------------
+    /// CLASS METHODS
+    /// ----------------------------------------------------------------------- 
 
+    /**
+     * `toggleControlPoints` adds or removes the children from the
+     * renderable set. Only active points are considered.
+     */
+    public toggleControlPoints(): void {
+        this._activated = !this._activated;
+        if (this.children.length == 0) {
+            for (let idx = 0; idx < this._max[0]; idx++) {
+                for (let jdx = 0; jdx < this._max[1]; jdx++) {
+                    this.add(this._points[idx][jdx]);
+                }
+            }
+        } else {
+            while (this.children.length > 0) {
+                const child = this.children.pop();
+                child?.removeFromParent();
+            }
+        }
+    }
+
+    /**
+     * `changePosition` is a private utility function to set
+     * the positions of current visible points.
+     */
+    private changePositions(): void {
+        if (this.plane) {
+            const factor = 5;
+            for (let idx = 0; idx < this._max[0]; idx++) {
+                for (let jdx = 0; jdx < this._max[1]; jdx++) {
+                    const x = (idx - (this._max[0] / 2));
+                    const y = (jdx - (this._max[1] / 2));
+                    this._points[idx][jdx].buffer = new Vector3(factor * x, 0, factor * y);
+                }
+            }
+        } else {
+            const radius = 10;
+            for (let idx = 0; idx < this._max[0]; idx++) {
+                for (let jdx = 0; jdx < this._max[1]; jdx++) {
+                    const theta = (idx / (this._max[0] - 1)) * .5 * Math.PI + .25 * Math.PI;
+                    const phi = (-jdx / (this._max[1] - 1)) * 2 * Math.PI;
+
+                    this._points[idx][jdx].buffer = new Vector3(
+                        radius * Math.sin(theta) * Math.cos(phi),
+                        radius * Math.sin(theta) * Math.sin(phi),
+                        radius * Math.cos(theta)
+                    );
+                }
+            }
+        }
+    }
+
+    /// -----------------------------------------------------------------------
+    /// OVERRIDES
+    /// -----------------------------------------------------------------------
+    
     /**
      * The `update` function add all points until max to the
      * renderable set.
      */
-    public update(): void {
+    override update(): void {
         while (this.children.length > 0) {
             const child = this.children.pop();
             child?.removeFromParent();
         }
 
-        for (let idx = 0; idx < this._max; idx++) {
-            this.add(this._points[idx]);
+        if (this._activated) {
+            for (let idx = 0; idx < this._max[0]; idx++) {
+                for (let jdx = 0; jdx < this._max[1]; jdx++) {
+                    this.add(this._points[idx][jdx]);
+                }
+            }
         }
+
         this.signalMaxChanged.emit(null);
     }
+}
+
+
+
+
+/**
+ * The `ControlPoints1d` class manages a set of control points
+ * which are used to determine the shape of a curve.
+ */
+export class ControlPoints1d extends ControlPoints {
 
     /// -----------------------------------------------------------------------
     /// CONSTRUCTOR, GETTER and SETTER
-
-    public signalMaxChanged: Signal<null>;
+    /// -----------------------------------------------------------------------
+    
     public _max: number;
     public _points: CustomPoint[];
 
     constructor() {
         super();
-        this.signalMaxChanged = new Signal<null>();
+
         this._points = [];
         for (let idx = 0; idx < primaryColor.length; idx++) {
             let point = new CustomPoint(Shape.CUBE, 1);
@@ -212,7 +230,23 @@ export class ControlPoints1d extends Group {
         this.update();
     }
 
+    /// -----------------------------------------------------------------------
+    /// OVERRIDES
+    /// -----------------------------------------------------------------------
+    
+    /**
+     * The `update` function add all points until max to the
+     * renderable set.
+     */
+    override update(): void {
+        while (this.children.length > 0) {
+            const child = this.children.pop();
+            child?.removeFromParent();
+        }
 
-
-
+        for (let idx = 0; idx < this._max; idx++) {
+            this.add(this._points[idx]);
+        }
+        this.signalMaxChanged.emit(null);
+    }
 }
