@@ -142,8 +142,12 @@ export class SplineLogic {
         const iterations: Vector3[][] = [];
         for (let k = 0; k <= r; k++) {
             iterations.push([]);
-            for (let j = r; j <= degree; j++) {
-                iterations[k].push(controlPoints[I - degree + j + 1].clone());
+            for (let j = k; j <= degree; j++) {
+                iterations[k].push(new Vector3());
+            }
+
+            for (let j = 0; j <= degree - k; j++) {
+                iterations[k][j] = controlPoints[I - degree + j + 1].clone();
             }
         }
 

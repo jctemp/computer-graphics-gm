@@ -1,4 +1,5 @@
 import { Vector3 } from "three";
+import { BezierCurveLogic } from "./bezierCurveLogic";
 import { KnotVector, SplineLogic } from "./splinesLogic";
 
 const KNOT_VECTOR = [0, 0, 0, 1, 2, 3, 3, 3];
@@ -84,5 +85,23 @@ describe("SplineLogic", () => {
         const knotVector = new KnotVector([-10, -6, -2, -2, 0, 4, 8, 12, 16, 18]);
         const [point, _] = SplineLogic.evaluatePosition(knotVector, controlPoints, 2, 6);
         expect(point.x).toEqual(0);
+    });
+
+    test("generateCurve", () => {
+        const controlPoints: Vector3[] = [];
+        [0, 4, 8, 4].forEach(x => {
+            controlPoints.push(new Vector3(x, 0, 0));
+        });
+        const knotVector = new KnotVector([0, 0, 0, 1, 1, 1]);
+        const pointA = SplineLogic.generateCurve(knotVector, controlPoints, 3, 100);
+        const [pointB, _] = BezierCurveLogic.generateCurve(controlPoints, 100);
+
+        pointA.forEach((a, idx) => {
+            const b = pointB[idx];
+            expect(a.x).toBeCloseTo(b.x);
+            expect(a.y).toBeCloseTo(b.y);
+            expect(a.z).toBeCloseTo(b.z);
+        });
+
     });
 });
