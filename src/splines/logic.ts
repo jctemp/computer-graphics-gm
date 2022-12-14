@@ -55,7 +55,7 @@ export class SplineLogic {
             } else if (value[0] == u) {
                 result = idx + value[1] - 1
             } else {
-                result = idx--;
+                result = --idx;
             }
             return false;
         });
@@ -246,7 +246,7 @@ export class SplineLogic {
         degree: number,
         u: number): Vector3 {
             // find left side Index I
-            const I = this.findIndexForU(knots, u) - 1;
+            const I = this.findIndexForU(knots, u);
 
             //calculate mulitplicity of u that is already in the sequence
             let r = 0;
