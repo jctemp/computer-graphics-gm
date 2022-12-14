@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { Vector3 } from "three";
+import { lerp } from "../core/utils";
 
 export class BezierCurveLogic {
 
@@ -70,7 +71,7 @@ export class BezierCurveLogic {
     private static deCasteljauIteration(points: Array<THREE.Vector3>, t: number): Array<THREE.Vector3> {
         let result = new Array<THREE.Vector3>();
         for (let i = 0; i < points.length - 1; i++)
-            result.push(points[i + 1].clone().sub(points[i]).multiplyScalar(t).add(points[i]));
+            result.push(lerp(points[i], points[i + 1], t));
         return result;
     }
 

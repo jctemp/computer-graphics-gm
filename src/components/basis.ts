@@ -4,7 +4,7 @@ import { Slot } from "../core/connector";
 import { CustomLine } from "../core/customLine";
 // TODO i swear you can do this dynamically
 import { PolynomialBasisLogic } from "../logic/polynomialBasisLogic";
-import { SplineLogic } from "../splines/logic";
+import { SplineLogic } from "../logic/splinesLogic";
 
 /**
  * The `Basis` class describes the polynomial basis of degree n. It creates
