@@ -2,7 +2,7 @@ import { Vector3 } from "three";
 import { Canvas } from "../core/canvas";
 import { Controller } from "./controller";
 import { connect, Slot } from "../core/connector";
-import { Basis } from "../components/basis";
+import { PolyBase } from "../components/basis";
 import { BezierCurveLogic } from "../logic/bezierCurveLogic";
 import { Curve } from "../components/curve";
 import { CurvePosition } from "../components/curvePosition";
@@ -62,7 +62,7 @@ export class BezierCurveController extends Controller {
 
     private _curve: Curve;
     private _curvePosition: CurvePosition;
-    private _polynomialBasis: Basis;
+    private _polynomialBasis: PolyBase;
     private _controlPoints: ControlPoints1d;
 
     public slotChanged: Slot<null>;
@@ -91,7 +91,7 @@ export class BezierCurveController extends Controller {
         this._curvePosition = new CurvePosition();
         this.canvas[0].append(this._curvePosition);
 
-        this._polynomialBasis = new Basis();
+        this._polynomialBasis = new PolyBase();
         this.canvas[1].append(this._polynomialBasis);
 
         connect(this._curve.signalControlPointsState, this._curvePosition.slotControlPointsState);
