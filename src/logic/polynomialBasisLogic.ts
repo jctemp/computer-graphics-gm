@@ -2,10 +2,10 @@ export class PolynomialBasisLogic {
     /**
      * Calculates the Bernstein polynomial function of a basis degree n
      */
-    public static generateBasis(degree: number, resolution: number): Array<Array<number>> {
-        const baseFunctions = Array<Array<number>>();
+    public static generateBasis(degree: number, resolution: number): number[][] {
+        const baseFunctions: number[][] = [];
         for (let idx = 0; idx < degree + 1; idx++) {
-            baseFunctions.push(Array<number>())
+            baseFunctions.push([])
         }
 
         for (let idx = 0; idx <= resolution; idx++) {
@@ -25,16 +25,16 @@ export class PolynomialBasisLogic {
      * @param t weight to determine a point (Note: assumed is a normalised value [0,1])
      * @returns the coefficient values of the the polynomials
      */
-    private static calculateCoefficients(n: number, t: number): Array<number> {
-        let coefficients = new Array<number>();
+    private static calculateCoefficients(n: number, t: number): number[] {
+        let coefficients: number[] = [];
         for (let j = 0; j <= n; j++) {
             coefficients.push(
                 PolynomialBasisLogic.binomial(n, j) * // n over k
-                (t ** j) *                                // t^j
-                ((1 - t) ** (n - j))                      // (1-t)^(n-j)
+                (t ** j) *                            // t^j
+                ((1 - t) ** (n - j))                  // (1-t)^(n-j)
             );
         }
-        
+
         return coefficients;
     }
 
