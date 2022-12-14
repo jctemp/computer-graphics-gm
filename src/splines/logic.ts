@@ -248,17 +248,24 @@ export class SplineLogic {
                 for (let k = r + 1; k <= degree; k++) {
                     ds.push(new Array<Vector3>());
                     for (let j = 0; j <= degree - k; j++) {
+                        // calculate coeffficient
                         let alpha = (u - this.translateIndex(knots, I - degree + k + j)) /
                             (this.translateIndex(knots, I + 1 + j) - this.translateIndex(knots, I - degree + k + j));
                         // prevent NaN / Infinity
                         if (!isFinite(alpha)) alpha = 0;
+                        // TODO makeshift way of fixing errors?
+                        // if (isNaN(alpha)) {
+                        //     alpha = 1;
+                        // } else if (!isFinite(alpha)) alpha = 0;
+
                         // get left side value
                         const dkj = ds[k - 1][j].clone().multiplyScalar(1 - alpha)
                         // get right side value
                         const dkj2 = ds[k - 1][j + 1].clone().multiplyScalar(alpha);
                         // add values and handle rounding errors
                         const result = dkj.add(dkj2);
-                        result.multiplyScalar(10000).round().divideScalar(10000);
+                        // TODO should you round here?
+                        //result.multiplyScalar(10000).round().divideScalar(10000);
                         // add result to end of list
                         ds[k].push(result);
                     }

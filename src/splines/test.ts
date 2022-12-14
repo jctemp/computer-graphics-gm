@@ -65,8 +65,8 @@ export class SplineTest {
         controlPolygon.push(new Vector3(4,0,0));
         controlPolygon.push(new Vector3(2,0,0));
         const knots2 = new Array<[number, number]>([-10,1],[-6,1],[-2,2],[0,1],[4,1],[8,1],[12,1],[16,1],[18,1]);
-        const curve = SplineLogic.calculateCurveWithDeBoor(knots2, controlPolygon, 3, 100);
-        //console.log(curve)
+        const curve = SplineLogic.calculateCurveWithDeBoor(knots2, controlPolygon, 3, 1000);
+        console.log(curve)
         // TODO test if truuly correct
 
         // output that tests completed on dev console
