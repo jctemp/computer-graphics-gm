@@ -10,6 +10,54 @@ import { ControlPoints1d } from "../components/controlPoints";
 
 export class BezierCurveController extends Controller {
 
+    /// -----------------------------------------------------------------------
+    /// CONSTRUCTOR, GETTER and SETTER
+    /// ----------------------------------------------------------------------- 
+
+    private _curve: Curve;
+    private _curvePosition: CurvePosition;
+    private _polynomialBasis: PolyBase;
+    private _controlPoints: ControlPoints1d;
+
+    public slotChanged: Slot<null>;
+
+    constructor(canvasWidth: () => number, canvasHeight: () => number) {
+        super();
+
+        // 1. create canvas
+        this.canvas.push(new Canvas(canvasWidth, canvasHeight));
+        this.canvas.push(new Canvas(canvasWidth, canvasHeight, false));
+
+        // 2. control points
+        this._controlPoints = new ControlPoints1d();
+        this.canvas[0].append(this._controlPoints);
+        this._controlPoints._points.forEach(c => this.canvas[0].draggable(c));
+
+        // 3. curve
+        this._curve = new Curve();
+        this.canvas[0].append(this._curve);
+
+        this._curvePosition = new CurvePosition();
+        this.canvas[0].append(this._curvePosition);
+
+        this._polynomialBasis = new PolyBase();
+        this.canvas[1].append(this._polynomialBasis);
+
+        // 4. slots
+        this.slotChanged = new Slot<null>();
+        this.slotChanged.addCallable((_) => this.changed());
+
+        connect(this._controlPoints.signalMaxChanged, this.slotChanged);
+        connect(this._curve.signalControlPointsState, this._curvePosition.slotControlPointsState);
+        connect(this._curvePosition.signalTime, this._polynomialBasis.slotTime);
+
+        this.changed();
+    }
+    
+    /// -----------------------------------------------------------------------
+    /// OVERRIDES
+    /// -----------------------------------------------------------------------
+    
     override update(): void {
         if (this.needsUpdate) {
             let controlPoints = this._controlPoints.children.map((p, idx) => {
@@ -55,48 +103,5 @@ export class BezierCurveController extends Controller {
         curvePoint.add(this._curvePosition, "toggleCurrentPoint")
             .name("Toggle Current Point");
 
-    }
-
-    /// -----------------------------------------------------------------------
-    /// CONSTRUCTOR, GETTER and SETTER
-
-    private _curve: Curve;
-    private _curvePosition: CurvePosition;
-    private _polynomialBasis: PolyBase;
-    private _controlPoints: ControlPoints1d;
-
-    public slotChanged: Slot<null>;
-
-    constructor(canvasWidth: () => number, canvasHeight: () => number) {
-        super();
-
-        this.slotChanged = new Slot<null>();
-        this.slotChanged.addCallable((_) => this.changed());
-
-        // 1. create canvas
-        this.canvas.push(new Canvas(canvasWidth, canvasHeight));
-        this.canvas.push(new Canvas(canvasWidth, canvasHeight, false));
-
-        // 2. control points
-        this._controlPoints = new ControlPoints1d();
-        this.canvas[0].append(this._controlPoints);
-        this._controlPoints._points.forEach(c => this.canvas[0].draggable(c));
-
-        connect(this._controlPoints.signalMaxChanged, this.slotChanged);
-
-        // 3. curve
-        this._curve = new Curve();
-        this.canvas[0].append(this._curve);
-
-        this._curvePosition = new CurvePosition();
-        this.canvas[0].append(this._curvePosition);
-
-        this._polynomialBasis = new PolyBase();
-        this.canvas[1].append(this._polynomialBasis);
-
-        connect(this._curve.signalControlPointsState, this._curvePosition.slotControlPointsState);
-        connect(this._curvePosition.signalTime, this._polynomialBasis.slotTime);
-
-        this.changed();
     }
 }  
