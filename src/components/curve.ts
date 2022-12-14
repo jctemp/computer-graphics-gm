@@ -1,4 +1,4 @@
-import { Group, Vector3 } from "three";
+import { Vector3 } from "three";
 import { CustomLine } from "../core/customLine";
 import { Signal, Slot } from "../core/connector";
 import { CustomPoint, Shape } from "../core/customPoint";
