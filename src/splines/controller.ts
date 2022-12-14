@@ -95,7 +95,6 @@ export class BSplineCurveController extends Controller {
 
         this.splineBasis = new SplineBasis();
         this.canvas[1].append(this.splineBasis);
-
         connect(this.bezierCurve.signalResolution, this.splineBasis.slotResolution);
     
 
@@ -114,8 +113,6 @@ export class BSplineCurveController extends Controller {
                 else
                     return new Vector3(Number.MAX_SAFE_INTEGER);
             }).filter(value => value.x !== Number.MAX_SAFE_INTEGER);
-            
-
             this.needsUpdate = false;
         }
     }
