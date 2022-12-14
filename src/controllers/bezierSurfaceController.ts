@@ -5,7 +5,6 @@ import { Canvas } from "../core/canvas";
 import { Controller } from "./controller";
 import { Surface } from "../components/surface";
 import { ControlPoints2d } from "../components/controlPoints";
-import { connect } from "../core/connector";
 import { SurfacePosition } from "../components/surfacePosition";
 
 export class BezierSurfaceController extends Controller {
@@ -21,14 +20,14 @@ export class BezierSurfaceController extends Controller {
         super();
 
         // 1. create canvas
-        this.canvas.push(new Canvas(canvasWidth, canvasHeight));
-        this.canvas[0].append(new DirectionalLight(0xFFFFFF, .9));
-        this.canvas[0].append(new AmbientLight(0x111111));
+        this.addCanvas(
+            new Canvas(canvasWidth, canvasHeight), 
+            [new DirectionalLight(0xFFFFFF, .9), new AmbientLight(0x111111)]
+        );
 
         // 2. control points
-        this._controlPoints = new ControlPoints2d();
-        this.appendControlPoints();
-        
+        this.appendControlPoints(new ControlPoints2d());
+
         // 3. surface
         this._surface = new Surface();
         this.canvas[0].append(this._surface);
@@ -36,7 +35,8 @@ export class BezierSurfaceController extends Controller {
         this._surfacePosition = new SurfacePosition();
         this.canvas[0].append(this._surfacePosition);
 
-        connect(this._controlPoints.signalMaxChanged, this.slotChanged);
+        // 4. signals
+        this.connectStandardSignals();
 
         this.changed();
     }

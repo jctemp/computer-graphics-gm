@@ -22,12 +22,11 @@ export class BezierCurveController extends Controller {
         super();
 
         // 1. create canvas
-        this.canvas.push(new Canvas(canvasWidth, canvasHeight));
-        this.canvas.push(new Canvas(canvasWidth, canvasHeight, false));
+        this.addCanvas(new Canvas(canvasWidth, canvasHeight));
+        this.addCanvas(new Canvas(canvasWidth, canvasHeight, false));
 
         // 2. control points
-        this._controlPoints = new ControlPoints1d();
-        this.appendControlPoints();
+        this.appendControlPoints(new ControlPoints1d());
 
         // 3. curve
         this._curve = new Curve();
@@ -39,7 +38,8 @@ export class BezierCurveController extends Controller {
         this._polynomialBasis = new PolyBase();
         this.canvas[1].append(this._polynomialBasis);
 
-        connect(this._controlPoints.signalMaxChanged, this.slotChanged);
+        // 4. signals
+        this.connectStandardSignals();
         connect(this._curve.signalControlPointsState, this._curvePosition.slotControlPointsState);
         connect(this._curvePosition.signalTime, this._polynomialBasis.slotTime);
 
