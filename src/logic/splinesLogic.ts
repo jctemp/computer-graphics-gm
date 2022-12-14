@@ -25,10 +25,10 @@ export class KnotVector {
             if (multiplicity) {
                 count += multiplicity;
                 if (count >= idx)
-                    return key
+                    return key;
             }
         }
-        return -1;
+        return this.findKnot(this.size() - 1);
     }
 
     /**
@@ -67,7 +67,7 @@ export class KnotVector {
         } else {
             this.knots.set(knot, value + 1);
         }
-        this.knots = new Map([...this.knots.entries()].sort((a, b) => b[0] - a[0]));
+        this.knots = new Map([...this.knots.entries()].sort((a, b) => a[0] - b[0]));
     }
 
     /**
@@ -76,7 +76,7 @@ export class KnotVector {
      */
     public size(): number {
         let summation = 0;
-        for (let value of this.knots.keys()) {
+        for (let value of this.knots.values()) {
             summation += value
         }
         return summation;
@@ -113,7 +113,7 @@ export class SplineLogic {
         const step = roundN((rightBound - leftBound) / resolution);
 
         for (let u = leftBound; u < rightBound; u += step) {
-            const [point, interations] = this.evaluatePosition(knotVector, controlPoints, degree, u);
+            const [point, _] = this.evaluatePosition(knotVector, controlPoints, degree, u);
             curve.push(point);
         }
 
