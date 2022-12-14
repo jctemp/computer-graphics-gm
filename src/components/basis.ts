@@ -2,20 +2,19 @@ import { GridHelper, Group, Vector3 } from "three";
 import { primaryColor } from "../core/color";
 import { Slot } from "../core/connector";
 import { CustomLine } from "../core/customLine";
-import { PolynomialBasisLogic } from "../logic/polynomialBasisLogic";
 
 /**
  * The `Basis` class describes the polynomial basis of degree n. It creates
  * all corresponding polynomials regarding a degree. In addition, 
  */
-export class Basis extends Group {
+abstract class Basis extends Group {
 
     /**
      * The `set` function recalculates the values for the current curve.
      * @param degree of the curve
      * @param resolution sampling accuracy
      */
-    public set(degree: number, resolution: number): void {
+    public set(degree: number, resolution: number, knots: Array<[number, number]> = new Array<[number, number]>): void {
         while (this.children.length > 0) {
             const child = this.children.pop();
             child?.removeFromParent();
@@ -77,4 +76,26 @@ export class Basis extends Group {
         this._bar.color = 0xAAAAAA;
     }
 
+    abstract calc(degree: number, resolution: number, knots: Array<[number, number]>): Array<Array<number>>;
+}
+
+export class PolyBase extends Basis {
+    override calc(degree: number, resolution: number): Array<Array<number>> {
+        let coefficients: number[][] = [];
+        import("../logic/polynomialBasisLogic").then(mod => {
+            coefficients = mod.PolynomialBasisLogic.generateBasis(degree, resolution);
+        });
+        return coefficients;
+    }
+}
+
+export class SplineBase extends Basis {
+    override calc(degree: number, resolution: number, knots: Array<[number, number]>): Array<Array<number>> {
+        let coefficients: number[][] = [];
+        import("../splines/logic").then(mod => {
+            const baseFunctions = mod.SplineLogic.generateBaseFunctions(knots, degree, resolution);
+            coefficients = baseFunctions[baseFunctions.length - 1];
+        });
+        return coefficients;
+    }
 }
