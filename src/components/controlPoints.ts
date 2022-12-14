@@ -26,6 +26,7 @@ export abstract class ControlPoints extends Group {
     /// -----------------------------------------------------------------------
 
     abstract update(): void;
+    abstract listControlPoints(): CustomPoint[];
 }
 
 export class ControlPoints2d extends ControlPoints {
@@ -37,7 +38,6 @@ export class ControlPoints2d extends ControlPoints {
     public static MAX: number = 10;
 
     public _points: CustomPoint[][];
-
     private _plane: boolean;
     private _max: [number, number];
     private _activated: boolean;
@@ -184,6 +184,20 @@ export class ControlPoints2d extends ControlPoints {
 
         this.signalMaxChanged.emit(null);
     }
+
+    /**
+     * wrap up all points in a single 1D array
+     * @returns Array of CustomPoints
+     */
+    override listControlPoints(): CustomPoint[] {
+        const result = new Array<CustomPoint>();
+        this._points.forEach(value => {
+            value.forEach(p => {
+                result.push(p);
+            })
+        });
+        return result;
+    }
 }
 
 
@@ -248,5 +262,13 @@ export class ControlPoints1d extends ControlPoints {
             this.add(this._points[idx]);
         }
         this.signalMaxChanged.emit(null);
+    }
+
+    /**
+     * acts as a simple getter for the control points
+     * @returns Array of CustomPoints
+     */
+    override listControlPoints(): CustomPoint[] {
+        return this._points;
     }
 }

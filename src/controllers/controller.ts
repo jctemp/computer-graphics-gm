@@ -46,6 +46,11 @@ export abstract class Controller {
         this.needsUpdate = true;
     }
 
+    public appendControlPoints() {
+        this.canvas[0].append(this._controlPoints);
+        this._controlPoints.listControlPoints().forEach(c => this.canvas[0].draggable(c));
+    }
+
     /// -----------------------------------------------------------------------
     /// ABSTRACT FUNCTIONS FOR OVERRIDE
     /// -----------------------------------------------------------------------

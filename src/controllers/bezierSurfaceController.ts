@@ -27,10 +27,8 @@ export class BezierSurfaceController extends Controller {
 
         // 2. control points
         this._controlPoints = new ControlPoints2d();
-        this.canvas[0].append(this._controlPoints);
-        (this._controlPoints as ControlPoints2d)._points.forEach(
-            arr => arr.forEach(c => this.canvas[0].draggable(c)));
-
+        this.appendControlPoints();
+        
         // 3. surface
         this._surface = new Surface();
         this.canvas[0].append(this._surface);

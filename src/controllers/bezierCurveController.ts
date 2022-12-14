@@ -27,8 +27,7 @@ export class BezierCurveController extends Controller {
 
         // 2. control points
         this._controlPoints = new ControlPoints1d();
-        this.canvas[0].append(this._controlPoints);
-        (this._controlPoints as ControlPoints1d)._points.forEach(c => this.canvas[0].draggable(c));
+        this.appendControlPoints();
 
         // 3. curve
         this._curve = new Curve();
