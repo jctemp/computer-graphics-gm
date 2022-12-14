@@ -218,61 +218,82 @@ export class SplineLogic {
 
             // get left and right side values of support interval
             const lb = this.translateIndex(knots, degree - 1);
-            const ub = this.translateIndex(knots, this.getKnotLength(knots) - degree + 1);
+            const rb = this.translateIndex(knots, this.getKnotLength(knots) - degree + 1);
+            const step = Math.round(((rb - lb) / resolution) * 10000) / 10000;
 
-            for (let u = lb; u < ub; u = Math.round((u + (ub - lb) / resolution) * 10000) / 10000) {
-                // find left side Index I
-                const I = this.findIndexForU(knots, u);
-
-                //calculate mulitplicity of u that is already in the sequence
-                let r = 0;
-                knots.every(value => {
-                    if (value[0] == u) {
-                        r += value[1];
-                        return false;
-                    } 
-                    return true;
-                });
-
-                // create array for de Boor values
-                const ds = new Array<Array<Vector3>>();
-                // pre fill already known values
-                for (let z = 0; z <= r; z++) {
-                    ds.push(new Array<Vector3>());
-                    for (let x = r; x <= degree; x++) {
-                        ds[z].push(controlPoints[I - degree + x].clone());
-                    }
-                }
-
-                // see algorithm 8.1 -> directly written from it
-                for (let k = r + 1; k <= degree; k++) {
-                    ds.push(new Array<Vector3>());
-                    for (let j = 0; j <= degree - k; j++) {
-                        // calculate coeffficient
-                        let alpha = (u - this.translateIndex(knots, I - degree + k + j)) /
-                            (this.translateIndex(knots, I + 1 + j) - this.translateIndex(knots, I - degree + k + j));
-                        // prevent NaN / Infinity
-                        if (!isFinite(alpha)) alpha = 0;
-                        // TODO makeshift way of fixing errors?
-                        // if (isNaN(alpha)) {
-                        //     alpha = 1;
-                        // } else if (!isFinite(alpha)) alpha = 0;
-
-                        // get left side value
-                        const dkj = ds[k - 1][j].clone().multiplyScalar(1 - alpha)
-                        // get right side value
-                        const dkj2 = ds[k - 1][j + 1].clone().multiplyScalar(alpha);
-                        // add values and handle rounding errors
-                        const result = dkj.add(dkj2);
-                        // TODO should you round here?
-                        //result.multiplyScalar(10000).round().divideScalar(10000);
-                        // add result to end of list
-                        ds[k].push(result);
-                    }
-                }
-                curve.push(ds[degree][0]);
+            //call caluclation function for each u inside the support
+            for (let u = lb; u < rb; u += step) {
+                const pointOnCurve = this.calculateCurveWithDeBoorSingleU(knots, controlPoints, degree, u);
+                curve.push(pointOnCurve);
             }
+
             // return calculated array of curve points
             return curve;
+    }
+
+    /**
+     * calculate de Boor  Algorithm for single value of u on the curve
+     * 
+     * @param knots 
+     * @param controlPoints 
+     * @param degree 
+     * @param u 
+     * @returns
+     */
+    public static calculateCurveWithDeBoorSingleU(
+        knots: Array<[number,number]>,
+        controlPoints: Array<Vector3>,
+        degree: number,
+        u: number): Vector3 {
+            // find left side Index I
+            const I = this.findIndexForU(knots, u);
+
+            //calculate mulitplicity of u that is already in the sequence
+            let r = 0;
+            knots.every(value => {
+                if (value[0] == u) {
+                    r += value[1];
+                    return false;
+                } 
+                return true;
+            });
+
+            // create array for de Boor values
+            const ds = new Array<Array<Vector3>>();
+            // pre fill already known values
+            for (let z = 0; z <= r; z++) {
+                ds.push(new Array<Vector3>());
+                for (let x = r; x <= degree; x++) {
+                    ds[z].push(controlPoints[I - degree + x].clone());
+                }
+            }
+
+            // see algorithm 8.1 -> directly written from it
+            for (let k = r + 1; k <= degree; k++) {
+                ds.push(new Array<Vector3>());
+                for (let j = 0; j <= degree - k; j++) {
+                    // calculate coeffficient
+                    let alpha = (u - this.translateIndex(knots, I - degree + k + j)) /
+                        (this.translateIndex(knots, I + 1 + j) - this.translateIndex(knots, I - degree + k + j));
+                    // prevent NaN / Infinity
+                    if (!isFinite(alpha)) alpha = 0;
+                    // TODO makeshift way of fixing errors?
+                    // if (isNaN(alpha)) {
+                    //     alpha = 1;
+                    // } else if (!isFinite(alpha)) alpha = 0;
+
+                    // get left side value
+                    const dkj = ds[k - 1][j].clone().multiplyScalar(1 - alpha)
+                    // get right side value
+                    const dkj2 = ds[k - 1][j + 1].clone().multiplyScalar(alpha);
+                    // add values and handle rounding errors
+                    const result = dkj.add(dkj2);
+                    // TODO should you round here?
+                    //result.multiplyScalar(10000).round().divideScalar(10000);
+                    // add result to end of list
+                    ds[k].push(result);
+                }
+            }
+            return ds[degree][0];
     }
 }
