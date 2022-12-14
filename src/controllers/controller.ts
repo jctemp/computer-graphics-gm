@@ -2,6 +2,7 @@ import { Canvas } from "../core/canvas";
 import { Slot, connect } from "../core/connector";
 import { ControlPoints } from "../components/controlPoints";
 import { Light } from "three";
+import { Object, ObjectPosition } from "../components/object";
 
 /**
  * abstract super class for controller of specific curve or surface types
@@ -18,6 +19,8 @@ export abstract class Controller {
 
     _controlPoints!: ControlPoints;
 
+    _object!: Object;
+    _position!: ObjectPosition;
 
     constructor() {
         this.slotChanged = new Slot<null>();
@@ -65,10 +68,12 @@ export abstract class Controller {
             cv.append(value);
         });
     }
-    public addLight(lights: Light[]) {
-        lights.forEach(value => {
-            this.canvas[0].append(value);
-        });
+    public addObject(type: Object) {
+        this._object = type;
+        this.canvas[0].append(this._object);
+
+        this._position = type.getPosition();
+        this.canvas[0].append(this._position);
     }
 
     /// -----------------------------------------------------------------------

@@ -2,12 +2,13 @@ import { Group, Vector3 } from "three";
 import { CustomLine } from "../core/customLine";
 import { Signal, Slot } from "../core/connector";
 import { CustomPoint, Shape } from "../core/customPoint";
+import { Object, ObjectPosition } from "./object";
 
 /**
  * The `Curve` class represents any curve type. It contains two aspect
  * that are essential: The curve points itself and the control points. 
  */
-export class Curve extends Group {
+export class Curve extends Object {
 
     /**
      * The `set` method updates the buffers of curve and control
@@ -70,6 +71,9 @@ export class Curve extends Group {
         this._resolution = Math.max(32, Math.min(1024, value));
     }
 
+    override getPosition(): ObjectPosition {
+        return new CurvePosition();
+    }
 }
 
 /**
@@ -77,7 +81,7 @@ export class Curve extends Group {
  * a `Curve` point: The current point at t with the corresponding
  * tangent and the intermediate calculates to determine the point.
  */
-export class CurvePosition extends Group {
+export class CurvePosition extends ObjectPosition {
 
     /**
      * The `set` function changes the internal values that provide a

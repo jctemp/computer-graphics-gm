@@ -9,12 +9,10 @@ import { ControlPoints1d } from "../components/controlPoints";
 
 export class BezierCurveController extends Controller {
 
-    /// -----------------------------------------------------------------------
+    /// -----------__surfacesurface------------------------------------------------------------
     /// CONSTRUCTOR, GETTER and SETTER
     /// ----------------------------------------------------------------------- 
 
-    private _curve: Curve;
-    private _curvePosition: CurvePosition;
     private _polynomialBasis: PolyBase;
 
     constructor(canvasWidth: () => number, canvasHeight: () => number) {
@@ -28,19 +26,15 @@ export class BezierCurveController extends Controller {
         this.appendControlPoints(new ControlPoints1d());
 
         // 3. curve
-        this._curve = new Curve();
-        this.canvas[0].append(this._curve);
-
-        this._curvePosition = new CurvePosition();
-        this.canvas[0].append(this._curvePosition);
+        this.addObject(new Curve());
 
         this._polynomialBasis = new PolyBase();
         this.canvas[1].append(this._polynomialBasis);
 
         // 4. signals
         this.connectStandardSignals();
-        connect(this._curve.signalControlPointsState, this._curvePosition.slotControlPointsState);
-        connect(this._curvePosition.signalTime, this._polynomialBasis.slotTime);
+        connect(this.object().signalControlPointsState, this.position().slotControlPointsState);
+        connect(this.position().signalTime, this._polynomialBasis.slotTime);
 
         this.changed();
     }
@@ -59,11 +53,11 @@ export class BezierCurveController extends Controller {
             }).filter(value => value.x !== Number.MAX_SAFE_INTEGER);
 
             const [points, tangents, intermediates] =
-                BezierCurveLogic.generateCurve(controlPoints, this._curve.resolution);
+                BezierCurveLogic.generateCurve(controlPoints, this.object().resolution);
 
-            this._curve.set(points, controlPoints);
-            this._curvePosition.set(points, tangents, intermediates);
-            this._polynomialBasis.set(controlPoints.length - 1, this._curve.resolution);
+            this.object().set(points, controlPoints);
+            this.position().set(points, tangents, intermediates);
+            this._polynomialBasis.set(controlPoints.length - 1, this.object().resolution);
 
             this.needsUpdate = false;
         }
@@ -78,21 +72,28 @@ export class BezierCurveController extends Controller {
 
         curve.add(this._controlPoints, "max", 3, (this._controlPoints as ControlPoints1d)._points.length, 1)
             .name("Control Points Count")
-        curve.add(this._curve, "resolution", 16, 256, 2)
+        curve.add(this.object(), "resolution", 16, 256, 2)
             .name("Resolution").onChange(() => this.changed());
-        curve.add(this._curve, "toggleControlPolygon")
+        curve.add(this.object(), "toggleControlPolygon")
             .name("Toggle Control Polygon");
 
-        curvePoint.add(this._curvePosition, "t", 0, 1, .01)
+        curvePoint.add(this.position(), "t", 0, 1, .01)
             .name("t (step)");
-        curvePoint.add(this._curvePosition, "size", .1, 2, .1)
+        curvePoint.add(this.position(), "size", .1, 2, .1)
             .name("Point Size");
-        curvePoint.add(this._curvePosition, "magnitude", 0, 2, .1)
+        curvePoint.add(this.position(), "magnitude", 0, 2, .1)
             .name("Tangent Magnitude");
-        curvePoint.add(this._curvePosition, "toggleIntermediates")
+        curvePoint.add(this.position(), "toggleIntermediates")
             .name("Toggle Intermediates");
-        curvePoint.add(this._curvePosition, "toggleCurrentPoint")
+        curvePoint.add(this.position(), "toggleCurrentPoint")
             .name("Toggle Current Point");
 
+    }
+
+    private object(): Curve {
+        return this._object as Curve;
+    }
+    private position(): CurvePosition {
+        return this._position as CurvePosition;
     }
 }  

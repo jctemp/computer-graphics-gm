@@ -2,8 +2,9 @@ import { Group, Vector3 } from "three";
 import { CustomLine } from "../core/customLine";
 import { CustomSurface } from "../core/customSurface";
 import { CustomPoint, Shape } from "../core/customPoint";
+import { Object, ObjectPosition } from "./object";
 
-export class Surface extends Group {
+export class Surface extends Object {
 
     /**
      * The `set` method updates the buffers of surface and control
@@ -85,6 +86,9 @@ export class Surface extends Group {
         ];
     }
 
+    override getPosition(): ObjectPosition {
+        return new SurfacePosition();
+    }
 }
 
 /**
@@ -92,7 +96,7 @@ export class Surface extends Group {
  * a `Surface` point: The current point at s and t with the corresponding
  * normal, tangent and bitangent.
  */
-export class SurfacePosition extends Group {
+export class SurfacePosition extends ObjectPosition {
 
     /**
      * `set` is a function that changes the internal values to provide

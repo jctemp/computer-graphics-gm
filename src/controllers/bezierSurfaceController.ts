@@ -12,9 +12,6 @@ export class BezierSurfaceController extends Controller {
     /// CONSTRUCTOR, GETTER and SETTER
     /// ----------------------------------------------------------------------- 
 
-    private _surface: Surface;
-    private _surfacePosition: SurfacePosition;
-
     constructor(canvasWidth: () => number, canvasHeight: () => number) {
         super();
 
@@ -28,11 +25,7 @@ export class BezierSurfaceController extends Controller {
         this.appendControlPoints(new ControlPoints2d());
 
         // 3. surface
-        this._surface = new Surface();
-        this.canvas[0].append(this._surface);
-
-        this._surfacePosition = new SurfacePosition();
-        this.canvas[0].append(this._surfacePosition);
+        this.addObject(new Surface());
 
         // 4. signals
         this.connectStandardSignals();
@@ -52,10 +45,10 @@ export class BezierSurfaceController extends Controller {
             let controlPoints = (this._controlPoints as ControlPoints2d).positions;
 
             const [positions, normals, tangents, bitangents] =
-                BezierSurfaceLogic.generateSurface(controlPoints, this._surface.resolution);
+                BezierSurfaceLogic.generateSurface(controlPoints, this.object().resolution);
 
-            this._surface.set({ positions, normals, controlPoints });
-            this._surfacePosition.set({ positions, normals, tangents, bitangents });
+            this.object().set({ positions, normals, controlPoints });
+            this.position().set({ positions, normals, tangents, bitangents });
 
             this.needsUpdate = false;
         }
@@ -64,7 +57,7 @@ export class BezierSurfaceController extends Controller {
     override gui(gui: GUI): void {
         // general control
         const control = gui.addFolder("Control Objects");
-        control.add(this._surface, "toggleControlMesh").name("Toggle Control Mesh");
+        control.add(this.object(), "toggleControlMesh").name("Toggle Control Mesh");
         control.add(this._controlPoints, "toggleControlPoints").name("Toggle Control Points");
         control.add(this._controlPoints, "xMax", 3, ControlPoints2d.MAX, 1).name("X Control Points");
         control.add(this._controlPoints, "yMax", 3, ControlPoints2d.MAX, 1).name("Y Control Points");
@@ -76,21 +69,28 @@ export class BezierSurfaceController extends Controller {
 
         // derivative control
         const derivate = gui.addFolder("Surface Point");
-        const xderiv = derivate.add(this._surfacePosition, "s", 0, 1, 1 / this._surface.resolution[0]).name("X Derivative");
-        const yderiv = derivate.add(this._surfacePosition, "t", 0, 1, 1 / this._surface.resolution[1]).name("Y Derivative");
-        derivate.add(this._surfacePosition, "toggleSurfacePoint").name("Toggle Surface Position");
+        const xderiv = derivate.add(this.position(), "s", 0, 1, 1 / this.object().resolution[0]).name("X Derivative");
+        const yderiv = derivate.add(this.position(), "t", 0, 1, 1 / this.object().resolution[1]).name("Y Derivative");
+        derivate.add(this.position(), "toggleSurfacePoint").name("Toggle Surface Position");
 
         // control for the mesh properties
         const mesh = gui.addFolder("Mesh");
-        mesh.add(this._surface.resolution, "0", 32, 256, 1).name("X Resolution").onChange(() => {
+        mesh.add(this.object().resolution, "0", 32, 256, 1).name("X Resolution").onChange(() => {
             this.changed();
-            xderiv.step(1 / this._surface.resolution[0]);
+            xderiv.step(1 / this.object().resolution[0]);
         });
-        mesh.add(this._surface.resolution, "1", 32, 256, 1).name("Y Resolution").onChange(() => {
+        mesh.add(this.object().resolution, "1", 32, 256, 1).name("Y Resolution").onChange(() => {
             this.changed();
-            yderiv.step(1 / this._surface.resolution[1]);
+            yderiv.step(1 / this.object().resolution[1]);
         });
-        mesh.add(this._surface.data, "wireframe");
-        mesh.addColor(this._surface.data, "color");
+        mesh.add(this.object().data, "wireframe");
+        mesh.addColor(this.object().data, "color");
+    }
+
+    private object(): Surface {
+        return this._object as Surface;
+    }
+    private position(): SurfacePosition {
+        return this._position as SurfacePosition;
     }
 }
