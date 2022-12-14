@@ -9,7 +9,7 @@ import { ControlPoints1d } from "../components/controlPoints";
 
 export class BezierCurveController extends Controller {
 
-    /// -----------__surfacesurface------------------------------------------------------------
+    /// -----------------------------------------------------------------------
     /// CONSTRUCTOR, GETTER and SETTER
     /// ----------------------------------------------------------------------- 
 
