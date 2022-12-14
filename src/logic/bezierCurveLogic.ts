@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { Vector3 } from "three";
-import { lerp } from "../core/utils";
+import { lerp, roundN } from "../core/utils";
 
 export class BezierCurveLogic {
 
@@ -16,7 +16,7 @@ export class BezierCurveLogic {
         const intermediates: Vector3[][][] = [];
 
         for (let idx = 0; idx <= resolution; idx++) {
-            const t = idx / resolution;
+            const t = roundN(idx / resolution);
             const [point, tangent, iterations] = BezierCurveLogic.evaluatePosition(controlPoints, t)
 
             points.push(point);
@@ -85,7 +85,7 @@ export class BezierCurveLogic {
     public static generateCurveWithoutTangents(points: Vector3[], resolution: number): Vector3[] {
         const curve: Vector3[] = [];
         for (let idx = 0; idx <= resolution; idx++) {
-            const t = idx / resolution;
+            const t = roundN(idx / resolution);
             while (points.length > 1) {
                 points = BezierCurveLogic.deCasteljauIteration(points, t);
             }
