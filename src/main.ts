@@ -4,6 +4,7 @@ import * as dat from 'dat.gui';
 import { Controller } from './controllers/controller';
 import { BezierCurveController } from './controllers/bezierCurveController';
 import { BezierSurfaceController } from './controllers/bezierSurfaceController';
+import { BSplineCurveController } from './controllers/bsplineCurveController';
 
 // fetch button elements from the navbar
 const bcurves = document.getElementById("bezier-curve");
@@ -61,6 +62,17 @@ function createBezierSurfaceController(): Controller {
     return new BezierSurfaceController(width, height);
 }
 
+// procedure to create a bspline curve controller
+function createBSplineCurveController(): Controller {
+    const nav = requestNavElement();
+    const app = requestAppElement();
+    const gap = getComputedStyle(app).gap.replace("[a-zA-Z]", "")
+    const width = () => (window.innerWidth - Number.parseFloat(gap)) / 2;
+    const height = () => window.innerHeight - nav.offsetHeight;
+
+    return new BSplineCurveController(width, height);
+}
+
 // procedure to set a new scene with bezier curve controller
 if (bcurves) {
     bcurves.onclick = () => {
@@ -80,6 +92,18 @@ if (bsurfaces) {
         gui = new dat.GUI();
         resetAppElement();
         controller = createBezierSurfaceController();
+        controller.run()
+        controller.gui(gui);
+    }
+}
+
+// procedure to set a new scene with bspline curve controller
+if (bnurbs) {
+    bnurbs.onclick = () => {
+        gui.destroy();
+        gui = new dat.GUI();
+        resetAppElement();
+        controller = createBSplineCurveController();
         controller.run()
         controller.gui(gui);
     }

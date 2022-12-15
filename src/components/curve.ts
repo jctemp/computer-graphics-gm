@@ -104,14 +104,14 @@ export class CurvePosition extends ObjectPosition {
         this.add(this._tangent);
 
         this._intermediate = [];
-        for (let idx = 0; idx < this._intermediates[0].length; idx++) {
+        this._intermediates.forEach(() => {
             const line = new CustomLine();
             line.color = 0x7F00FF; // violet
             line.renderOrder = 1;
 
             this._intermediate.push(line);
             this.add(line);
-        }
+        });
 
         if (!this._controlPointsState)
             this.toggleIntermediates();
@@ -134,10 +134,12 @@ export class CurvePosition extends ObjectPosition {
         const intermediate = this._intermediates[idx];
 
         this._point.buffer = point;
+        if (tangent != undefined)
         this._tangent.buffer = [
             point, point.clone()
                 .add(tangent.clone().multiplyScalar(this._magnitude))
         ];
+        if (intermediate != undefined)
         intermediate.forEach((iteration, idx) => {
             this._intermediate[idx].buffer = iteration;
         });
