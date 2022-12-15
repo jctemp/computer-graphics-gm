@@ -1,8 +1,6 @@
 import { Vector3 } from "three";
 
 function lerp(a: Vector3, b: Vector3, t: number): Vector3 {
-    a = a.clone();
-    b = b.clone();
     return b.clone().sub(a).multiplyScalar(t).add(a);
 }
 
