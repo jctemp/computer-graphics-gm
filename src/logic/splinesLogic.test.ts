@@ -107,16 +107,18 @@ describe("SplineLogic", () => {
 
     test("generateCurve", () => {
         const controlPoints: Vector3[] = [];
-        [0, 4, 8, 4, 8, 0].forEach(x => {
+        [0, 4, 8, 4, 8, 0, 8].forEach(x => {
             controlPoints.push(new Vector3(x, 0, 0));
         });
-        const knotVector = new KnotVector([0, 0.25, 0.25, 0.5, 0.5, 0.7, 0.8, 1]);
-
+        const knotVector = new KnotVector([0, 0.25, 0.25, 0.5, 0.6, 0.6, 0.8, 0.9, 1]);
+        
+        const degree = 3;
         const epsilon = 0.000001;
-        [0.25, 0.5].forEach(value => {
-            const knot = SplineLogic.evaluatePosition(knotVector, controlPoints, 3, value)[0].x;
-            const compareLower = SplineLogic.evaluatePosition(knotVector, controlPoints, 3, value + epsilon)[0].x;
-            const compareUpper = SplineLogic.evaluatePosition(knotVector, controlPoints, 3, value - epsilon)[0].x;
+
+        [0.25, 0.5, 0.6].forEach(value => {
+            const knot = SplineLogic.evaluatePosition(knotVector, controlPoints, degree, value)[0].x;
+            const compareLower = SplineLogic.evaluatePosition(knotVector, controlPoints, degree, value + epsilon)[0].x;
+            const compareUpper = SplineLogic.evaluatePosition(knotVector, controlPoints, degree, value - epsilon)[0].x;
 
             expect(knot).toBeCloseTo(compareLower);
             expect(knot).toBeCloseTo(compareUpper);
