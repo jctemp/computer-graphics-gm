@@ -151,6 +151,11 @@ export class SplineLogic {
             }
         }
 
+        /**** IDEA: only add the points on the relevant k -> directly like on page 21 the line d_r_j-r = ... ****/
+        // for (let j = r; j <= degree; j++) {
+        //     iterations[r].push(controlPoints[I - degree + j + 1].clone());
+        // }
+
         // see algorithm 8.1 -> directly written from it
         for (let k = r + 1; k <= degree; k++) {
             iterations.push([]);
