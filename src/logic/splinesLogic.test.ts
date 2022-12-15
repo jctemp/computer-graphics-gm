@@ -114,14 +114,18 @@ describe("SplineLogic", () => {
         
         const degree = 3;
         const epsilon = 0.000001;
+        const [leftBound, rightBound] = knotVector.support(degree);
 
         [0.25, 0.5, 0.6].forEach(value => {
             const knot = SplineLogic.evaluatePosition(knotVector, controlPoints, degree, value)[0].x;
-            const compareLower = SplineLogic.evaluatePosition(knotVector, controlPoints, degree, value + epsilon)[0].x;
-            const compareUpper = SplineLogic.evaluatePosition(knotVector, controlPoints, degree, value - epsilon)[0].x;
+            
+            const upper = value + epsilon;
+            if (upper < rightBound)
+                expect(knot).toBeCloseTo(SplineLogic.evaluatePosition(knotVector, controlPoints, degree, upper)[0].x);
 
-            expect(knot).toBeCloseTo(compareLower);
-            expect(knot).toBeCloseTo(compareUpper);
+            const lower = value - epsilon;
+            if (lower >= leftBound)
+                expect(knot).toBeCloseTo(SplineLogic.evaluatePosition(knotVector, controlPoints, degree, lower)[0].x);
         });
     });
 });
