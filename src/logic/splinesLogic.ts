@@ -134,21 +134,23 @@ export class SplineLogic {
         // The first step is to determine the insertPosition of the current knot, which
         // is u ∈ [u_I, u_{I + 1}) where u is the `insertKnot`. 
         // In addition, we can retrieve the multiplicity `r` of the `insertKnot`.
-        const [I, _] = knotVector.findIndex(insertKnot);
+        const [I, r] = knotVector.findIndex(insertKnot);
 
-        // Find the control points and the intermediates for a given `insertKnot`. The
-        // activeControlPoints contains all iterations of the de-boor algorithm. With
-        // that, the k defines `iteration` as seen later.
-        const iterations: Vector3[][] = [];
-        iterations.push([]);
-        for (let j = 0; j <= degree; j++) {
-            iterations[0].push(controlPoints[I - degree + j + 1].clone());
+        // `intermediates` will contail the iterations of the de-boor algorithm. At this
+        // stage we only want the inital points required at the r-th column of the triangle.
+        const intermediates: Vector3[][] = [];
+        intermediates.push([]);
+        for (let j = 0; j <= degree - r; j++) {
+            intermediates[0].push(controlPoints[I - degree + j + 1].clone());
         }
 
-        // see algorithm 8.1 -> directly written from it
-        for (let k = 1; k <= degree; k++) {
-            iterations.push([]);
-            for (let j = 0; j <= degree - k; j++) {
+        // The algorithm starts at the r-th column with n-k-r entries. That's why we need to
+        // subtract `r` from `degree` as there are `degree` columns.
+        for (let k = 1; k <= degree - r; k++) {
+            intermediates.push([]);
+            for (let j = 0; j <= degree - k - r; j++) {
+                // This is effectivly calculating alpha on multiple lines. As `findKnot` is
+                // in O(n), we precalucalted the knots.
                 const minKnot = knotVector.findKnot(I - degree + k + j);
                 const maxKnot = knotVector.findKnot(I + 1 + j);
                 const denominator = maxKnot - minKnot;
@@ -159,13 +161,13 @@ export class SplineLogic {
                 // The used points in the lerp represent the controlPoints at a specific 
                 // iteration. Here the k - 1 is the previous iteration and j as j + 1 
                 // the active control points at an iteration.
-                iterations[k].push(lerp(iterations[k - 1][j], iterations[k - 1][j + 1], alpha));
+                intermediates[k].push(lerp(intermediates[k - 1][j], intermediates[k - 1][j + 1], alpha));
             }
         }
 
-        const point = iterations.pop()?.at(0);
+        const point = intermediates.pop()?.at(0);
         if (point === undefined) throw new Error("Evaluate position: no point calculated.");
 
-        return [point, iterations];
+        return [point, intermediates];
     }
 }

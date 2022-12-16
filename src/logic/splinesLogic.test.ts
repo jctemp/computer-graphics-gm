@@ -105,7 +105,7 @@ describe("SplineLogic", () => {
         });
     });
 
-    test("generateCurve", () => {
+    test("evaluatePositionsContinuity", () => {
         const controlPoints: Vector3[] = [];
         [0, 4, 8, 4, 8, 0, 8].forEach(x => {
             controlPoints.push(new Vector3(x, 0, 0));
