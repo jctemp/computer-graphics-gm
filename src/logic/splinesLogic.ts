@@ -134,30 +134,19 @@ export class SplineLogic {
         // The first step is to determine the insertPosition of the current knot, which
         // is u ∈ [u_I, u_{I + 1}) where u is the `insertKnot`. 
         // In addition, we can retrieve the multiplicity `r` of the `insertKnot`.
-        const [I, r] = knotVector.findIndex(insertKnot);
+        const [I, _] = knotVector.findIndex(insertKnot);
 
         // Find the control points and the intermediates for a given `insertKnot`. The
         // activeControlPoints contains all iterations of the de-boor algorithm. With
         // that, the k defines `iteration` as seen later.
         const iterations: Vector3[][] = [];
-        for (let k = 0; k <= r; k++) {
-            iterations.push([]);
-            for (let j = k; j <= degree; j++) {
-                iterations[k].push(new Vector3());
-            }
-
-            for (let j = 0; j <= degree - k; j++) {
-                iterations[k][j] = controlPoints[I - degree + j + 1].clone();
-            }
+        iterations.push([]);
+        for (let j = 0; j <= degree; j++) {
+            iterations[0].push(controlPoints[I - degree + j + 1].clone());
         }
 
-        /**** IDEA: only add the points on the relevant k -> directly like on page 21 the line d_r_j-r = ... ****/
-        // for (let j = r; j <= degree; j++) {
-        //     iterations[r].push(controlPoints[I - degree + j + 1].clone());
-        // }
-
         // see algorithm 8.1 -> directly written from it
-        for (let k = r + 1; k <= degree; k++) {
+        for (let k = 1; k <= degree; k++) {
             iterations.push([]);
             for (let j = 0; j <= degree - k; j++) {
                 const minKnot = knotVector.findKnot(I - degree + k + j);
