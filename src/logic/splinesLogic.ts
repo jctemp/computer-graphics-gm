@@ -7,11 +7,30 @@ import { lerp, roundN } from "../core/utils";
  * easier.
  */
 export class KnotVector {
-    knots: Map<number, number>;
-    constructor(knot_vector: number[]) {
-        this.knots = new Map<number, number>;
-        knot_vector.forEach(element => this.insert(element));
+    _knots: Map<number, number>;
+    _maxCount: number;
+    constructor(knotVector: number[], maxKnotCount: number = Number.MAX_SAFE_INTEGER) {
+        this._maxCount = maxKnotCount;
+        this._knots = new Map<number, number>;
+        knotVector.forEach(element => this.insert(element));
     }
+
+    public set knots(_: string) {
+    }
+
+    public get knots(): string {
+        const list: number[] = [];
+        for (const key of this._knots.keys()) {
+            let multiplicity = this._knots.get(key);
+            if (multiplicity) {
+                for (let idx = 0; idx < multiplicity; idx++) {
+                    list.push(key);
+                }
+            }
+        }
+        return list.toString().replaceAll(",", " ");
+    }
+
 
     /**
      * Finds to a given index the knot value
@@ -20,8 +39,8 @@ export class KnotVector {
      */
     public findKnot(idx: number): number {
         let count = -1;
-        for (const key of this.knots.keys()) {
-            let multiplicity = this.knots.get(key);
+        for (const key of this._knots.keys()) {
+            let multiplicity = this._knots.get(key);
             if (multiplicity) {
                 count += multiplicity;
                 if (count >= idx)
@@ -39,13 +58,13 @@ export class KnotVector {
     public findIndex(knot: number): [number, number] {
         let index = 0;
         let multiplicity = 0;
-        for (const key of this.knots.keys()) {
+        for (const key of this._knots.keys()) {
             if (key < knot) {
-                let tmp = this.knots.get(key);
+                let tmp = this._knots.get(key);
                 if (tmp === undefined) throw new Error("Impossible");
                 index += tmp;
             } else if (key === knot) {
-                let tmp = this.knots.get(key);
+                let tmp = this._knots.get(key);
                 if (tmp === undefined) throw new Error("Impossible");
                 index += tmp;
                 multiplicity = tmp;
@@ -61,13 +80,25 @@ export class KnotVector {
      * @param knot a number
      */
     public insert(knot: number): void {
-        const value = this.knots.get(knot);
+        if (this.size() === this._maxCount) return;
+
+        const value = this._knots.get(knot);
         if (value === undefined) {
-            this.knots.set(knot, 1);
+            this._knots.set(knot, 1);
         } else {
-            this.knots.set(knot, value + 1);
+            this._knots.set(knot, value + 1);
         }
-        this.knots = new Map([...this.knots.entries()].sort((a, b) => a[0] - b[0]));
+        this._knots = new Map([...this._knots.entries()].sort((a, b) => a[0] - b[0]));
+    }
+
+    /**
+     * Delete a knot at the correct position or updates the multiplicity.
+     * @param knot a number
+     */
+    public delete(knot: number): void {
+        const multiplicity = this._knots.get(knot);
+        if (multiplicity && multiplicity == 1) this._knots.delete(knot);
+        else if (multiplicity) this._knots.set(knot, multiplicity - 1);
     }
 
     /**
@@ -76,7 +107,7 @@ export class KnotVector {
      */
     public size(): number {
         let summation = 0;
-        for (let value of this.knots.values()) {
+        for (let value of this._knots.values()) {
             summation += value
         }
         return summation;
@@ -93,6 +124,15 @@ export class KnotVector {
         const leftBound = this.findKnot(degree - 1);
         const rightBound = this.findKnot(this.size() - degree);
         return [leftBound, rightBound]
+    }
+
+    /**
+     * Calculates the |D| = K - n + 1
+     * @param degree of the target polynomial
+     * @returns amount of required control points
+     */
+    public requiredControlPoints(degree: number): number {
+        return this.size() - degree + 1;
     }
 }
 

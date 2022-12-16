@@ -5,6 +5,7 @@ import { Curve, CurvePosition } from "../components/curve";
 import { Canvas } from "../core/canvas";
 import { Controller } from "./controller";
 import { SplineLogic, KnotVector } from "../logic/splinesLogic";
+import { primaryColor } from "../core/color";
 
 export class BSplineCurveController extends Controller {
 
@@ -14,25 +15,28 @@ export class BSplineCurveController extends Controller {
 
     private _knots: KnotVector;
     private _degree: number;
+    private _u: number;
 
     constructor(canvasWidth: () => number, canvasHeight: () => number) {
         super();
 
+        this._u = 0;
+
         // 1. create canvas
         this.addCanvas(new Canvas(canvasWidth, canvasHeight));
 
+        this._degree = 3;
+        this._knots = new KnotVector([0, 0, 0, 2, 4, 4, 5, 7, 7, 7, 9, 10, 12, 12],
+            primaryColor.length + this._degree); // d + n - 1 = k
+
         // 2. control points
-        this.appendControlPoints(new ControlPoints1d());
-        this.points().max = 12;
-        
+        this.appendControlPoints(new ControlPoints1d(this._knots.requiredControlPoints(this._degree)));
+
         // 3. curve
         this.addObject(new Curve());
 
         // 4. signals
         this.connectStandardSignals();
-
-        this._degree = 3; // -> 
-        this._knots = new KnotVector([0,0,0,2,4,4,5,7,7,7,9,10,12,12]);
 
         this.changed();
     }
@@ -40,9 +44,11 @@ export class BSplineCurveController extends Controller {
     /// -----------------------------------------------------------------------
     /// OVERRIDES
     /// -----------------------------------------------------------------------
-    
+
     override update(): void {
         if (this.needsUpdate) {
+            this.points().max = this._knots.requiredControlPoints(this._degree);
+
             let controlPoints = this._controlPoints.children.map((p, idx) => {
                 if (idx < this.points().max)
                     return p.position.clone();
@@ -54,7 +60,7 @@ export class BSplineCurveController extends Controller {
 
             this.object().set(points, controlPoints);
             this.position().set(points, [], []);
-            
+
             this.needsUpdate = false;
         }
     }
@@ -65,9 +71,13 @@ export class BSplineCurveController extends Controller {
 
         curve.open();
         curvePoint.open();
-        
-        curve.add(this.object(), "resolution", 16, 256, 2)
+
+        curve.add(this.object(), "resolution", 16, 1024, 2)
             .name("Resolution").onChange(() => this.changed());
+        curve.add(this._knots, "knots").listen();
+        curve.add(this, "_u", -100, 100, 1).name("Insert Knot");
+        curve.add(this, "insert").onFinishChange(() => this.changed());
+        curve.add(this, "delete").onFinishChange(() => this.changed());
 
         curvePoint.add(this.position(), "t", 0, 1, .01)
             .name("t (step)");
@@ -81,5 +91,21 @@ export class BSplineCurveController extends Controller {
     }
     private position(): CurvePosition {
         return this._position as CurvePosition;
+    }
+
+    /**
+     * Wrapper to make insert call.
+     */
+    private insert(): void {
+        const [_, m] = this._knots.findIndex(this._u);
+        if (m === this._degree) return;
+        this._knots.insert(this._u);
+    }
+
+    /**
+     * Wrapper to make delete call.
+     */
+    private delete(): void {
+        this._knots.delete(this._u);
     }
 }

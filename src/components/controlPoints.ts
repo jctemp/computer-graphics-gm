@@ -216,7 +216,7 @@ export class ControlPoints1d extends ControlPoints {
     public _max: number;
     public _points: CustomPoint[];
 
-    constructor() {
+    constructor(max: number) {
         super();
 
         this._points = [];
@@ -224,14 +224,13 @@ export class ControlPoints1d extends ControlPoints {
             let point = new CustomPoint(Shape.CUBE, 1);
 
             point.buffer = (new Vector3(
-                randFloat(-10, 10), randFloat(-10, 10), 0));
+                4 * idx, randFloat(-10, 10), 0).sub(new Vector3(2 * max)));
             point.dragUpdate = () => this.signalMaxChanged.emit(null);
             point.color = primaryColor[this._points.length];
 
             this._points.push(point);
         }
-
-        this._max = 4;
+        this._max = max;
         this.max = this._max;
     }
 

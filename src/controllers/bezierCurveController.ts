@@ -23,7 +23,7 @@ export class BezierCurveController extends Controller {
         this.addCanvas(new Canvas(canvasWidth, canvasHeight, false));
 
         // 2. control points
-        this.appendControlPoints(new ControlPoints1d());
+        this.appendControlPoints(new ControlPoints1d(4));
 
         // 3. curve
         this.addObject(new Curve());
@@ -72,7 +72,7 @@ export class BezierCurveController extends Controller {
 
         curve.add(this._controlPoints, "max", 3, (this._controlPoints as ControlPoints1d)._points.length, 1)
             .name("Control Points Count")
-        curve.add(this.object(), "resolution", 16, 256, 2)
+        curve.add(this.object(), "resolution", 16, 1024, 2)
             .name("Resolution").onChange(() => this.changed());
         curve.add(this.object(), "toggleControlPolygon")
             .name("Toggle Control Polygon");
