@@ -16,9 +16,18 @@ export class KnotVector {
     }
 
     public set knots(_: string) {
+        /* 
+        THE GETTER AND SETTER IS THERE FOR THE GUI, WHICH IS MANDATORY.
+        HERE IS NO IMPLEMENTATION AS IT SHOULD NOT BE USED, HENCE NO
+        FUNCTIONALITY.
+        */
     }
 
     public get knots(): string {
+        return this.array.toString().replaceAll(",", " ");
+    }
+
+    public get array(): number[] {
         const list: number[] = [];
         for (const key of this._knots.keys()) {
             let multiplicity = this._knots.get(key);
@@ -28,9 +37,12 @@ export class KnotVector {
                 }
             }
         }
-        return list.toString().replaceAll(",", " ");
+        return list;
     }
 
+    public clone(): KnotVector {
+        return new KnotVector(this.array);
+    }
 
     /**
      * Finds to a given index the knot value
@@ -146,9 +158,11 @@ export class SplineLogic {
      * @returns a tuple in the from of `[points, intermediates]`
      */
     public static generateCurve(knotVector: KnotVector, controlPoints: Vector3[],
-        degree: number, resolution: number): Vector3[] {
+        degree: number, resolution: number): [Vector3[], Vector3[]] {
 
+        // 1. calculate the curve points
         const curve: Vector3[] = [];
+
         const [leftBound, rightBound] = knotVector.support(degree);
         const step = roundN((rightBound - leftBound) / resolution);
 
@@ -157,7 +171,35 @@ export class SplineLogic {
             curve.push(point);
         }
 
-        return curve;
+        // 2. calculate the tangents
+        const tangents: Vector3[] = [];
+        const degreeDerivates = degree - 1;
+
+        // 2.1 determine the difference between control points
+        const controlPointDeltas: Vector3[] = [];
+        for (let idx = 0; idx < controlPoints.length - 1; idx++) {
+            controlPointDeltas.push(controlPoints[idx + 1].clone().sub(controlPoints[idx]));
+        }
+
+        // 2.2 we reduced the amount of available control points, therefore we need to remove
+        //     one knot from both ends to have the correct support. 
+        //     See relationship `L = K - n + 1`.
+        const knotVectorDeltas = knotVector.clone();
+        knotVectorDeltas.delete(knotVectorDeltas.findKnot(0));
+        knotVectorDeltas.delete(knotVectorDeltas.findKnot(knotVectorDeltas.size()));
+
+        const [leftBoundDeltas, rightBoundDeltas] = knotVectorDeltas.support(degreeDerivates);
+        const stepDeltas = roundN((rightBoundDeltas - leftBoundDeltas) / resolution);
+
+        // 2.3 Now, we can simply evaluate the curve tangents, as we apply de-boor for a function
+        //     of lower degree
+        for (let u = leftBoundDeltas; u < rightBoundDeltas; u += stepDeltas) {
+            let [tangent, _] = this.evaluatePosition(knotVectorDeltas, controlPointDeltas, degreeDerivates, u);
+            tangent.multiplyScalar(degreeDerivates);
+            tangents.push(tangent);
+        }
+
+        return [curve, tangents];
     }
 
     /**

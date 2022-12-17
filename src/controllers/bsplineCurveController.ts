@@ -56,10 +56,10 @@ export class BSplineCurveController extends Controller {
                     return new Vector3(Number.MAX_SAFE_INTEGER);
             }).filter(value => value.x !== Number.MAX_SAFE_INTEGER);
 
-            const points = SplineLogic.generateCurve(this._knots, controlPoints, this._degree, this.object().resolution)
+            const [points, tangent] = SplineLogic.generateCurve(this._knots, controlPoints, this._degree, this.object().resolution)
 
             this.object().set(points, controlPoints);
-            this.position().set(points, [], []);
+            this.position().set(points, tangent, []);
 
             this.needsUpdate = false;
         }
@@ -74,13 +74,15 @@ export class BSplineCurveController extends Controller {
 
         curve.add(this.object(), "resolution", 16, 1024, 2)
             .name("Resolution").onChange(() => this.changed());
-        curve.add(this._knots, "knots").listen();
-        curve.add(this, "_u", -100, 100, 1).name("Insert Knot");
-        curve.add(this, "insert").onFinishChange(() => this.changed());
-        curve.add(this, "delete").onFinishChange(() => this.changed());
+        curve.add(this._knots, "knots").listen().name("Knot Vector");
+        curve.add(this, "insert").onFinishChange(() => this.changed()).name("Insert Knot Value");
+        curve.add(this, "delete").onFinishChange(() => this.changed()).name("Delete Knot Value");
+        curve.add(this, "_u", -100, 100, 1).name("Knot Value");
 
         curvePoint.add(this.position(), "t", 0, 1, .01)
             .name("t (step)");
+        curvePoint.add(this.position(), "size", .1, 2, .1);
+        curvePoint.add(this.position(), "magnitude", 0, 2, .1);
     }
 
     private points(): ControlPoints1d {
