@@ -96,8 +96,9 @@ export class BSplineCurveController extends Controller {
     }
 
     /**
-     * Wrapper to make insert call.
+     * Wrapper to make insert call. Only for the UI.
      */
+    // @ts-ignore
     private insert(): void {
         const [_, m] = this._knots.findIndex(this._u);
         if (m === this._degree) return;
@@ -105,8 +106,9 @@ export class BSplineCurveController extends Controller {
     }
 
     /**
-     * Wrapper to make delete call.
+     * Wrapper to make delete call. Only for the UI.
      */
+    // @ts-ignore
     private delete(): void {
         this._knots.delete(this._u);
     }
