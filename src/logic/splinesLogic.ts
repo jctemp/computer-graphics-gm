@@ -231,7 +231,10 @@ export class SplineLogic {
             intermediates[0].push(controlPoints[j].clone());
         }
 
-        const pascal = pascalRow(degree - r - 1);
+        // these pascal row of degree -1 is effectively used to split the alphas and (1 - alphas) from each other
+        // when calculating which paths factor belong to which d
+        let pascalIdx = degree - r - 1;
+        let pascal = pascalRow(pascalIdx);
         const alphas: number[] = [];
         // fill intermediate alpha values with 1 as the neutral element for multiplikation
         pascal.forEach(value => {
@@ -245,7 +248,8 @@ export class SplineLogic {
         // subtract `r` from `degree` as there are `degree` columns.
         for (let k = 1; k <= degree - r; k++) {
             intermediates.push([]);
-            let alphaIndex = 0;
+            let alphaIdx = 0;
+            pascal = pascalRow(pascalIdx--);
             for (let j = 0; j <= degree - k - r; j++) {
                 // This is effectivly calculating alpha on multiple lines. As `findKnot` is
                 // in O(n), we precalucalted the knots.
@@ -260,10 +264,10 @@ export class SplineLogic {
                 // a certain interval length, at which the alpha has an impact. TODO explain better gl hf
                 for (let idx = 0; idx < pascal[j]; idx++) {
                     for (let jdx = 0; jdx < 2 ** (k-1); jdx++) {
-                        alphas[alphaIndex++] *= (1 - alpha);
+                        alphas[alphaIdx++] *= (1 - alpha);
                     }
                     for (let jdx = 0; jdx < 2 ** (k-1); jdx++) {
-                        alphas[alphaIndex++] *= alpha;
+                        alphas[alphaIdx++] *= alpha;
                     }
                 }
 
