@@ -94,8 +94,8 @@ describe("SplineLogic", () => {
             controlPoints.push(new Vector3(x, 0, 0));
         });
         const knotVector = new KnotVector([0, 0, 0, 1, 1, 1]);
-        const pointA = SplineLogic.generateCurve(knotVector, controlPoints, 3, 100);
-        const [pointB, _] = BezierCurveLogic.generateCurve(controlPoints, 100);
+        const [pointA] = SplineLogic.generateCurve(knotVector, controlPoints, 3, 100);
+        const [pointB] = BezierCurveLogic.generateCurve(controlPoints, 100);
 
         pointA.forEach((a, idx) => {
             const b = pointB[idx];
