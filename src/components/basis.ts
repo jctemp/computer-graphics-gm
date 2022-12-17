@@ -2,22 +2,19 @@ import { GridHelper, Group, Vector3 } from "three";
 import { primaryColor } from "../core/color";
 import { Slot } from "../core/connector";
 import { CustomLine } from "../core/customLine";
-// TODO i swear you can do this dynamically
-import { PolynomialBasisLogic } from "../logic/polynomialBasisLogic";
-import { SplineLogic } from "../logic/splinesLogic";
 
 /**
  * The `Basis` class describes the polynomial basis of degree n. It creates
  * all corresponding polynomials regarding a degree. In addition, 
  */
-abstract class Basis extends Group {
+export class Basis extends Group {
 
     /**
      * The `set` function recalculates the values for the current curve.
      * @param degree of the curve
      * @param resolution sampling accuracy
      */
-    public set(degree: number, resolution: number, knots: Array<[number, number]> = new Array<[number, number]>): void {
+    public set(coefficients: number[][]): void {
         while (this.children.length > 0) {
             const child = this.children.pop();
             child?.removeFromParent();
@@ -30,7 +27,7 @@ abstract class Basis extends Group {
 
         this.add(this._bar);
 
-        const coefficients = this.calc(degree, resolution, knots);
+        const resolution = coefficients[0].length;
         coefficients.forEach((coeffs, idx) => {
             const line = new CustomLine();
             line.color = primaryColor[idx];
@@ -75,21 +72,5 @@ abstract class Basis extends Group {
         this._bar = new CustomLine();
         this._bar.renderOrder = 1;
         this._bar.color = 0xAAAAAA;
-    }
-
-    abstract calc(degree: number, resolution: number, knots: Array<[number, number]>): Array<Array<number>>;
-}
-
-export class PolyBase extends Basis {
-    override calc(degree: number, resolution: number): Array<Array<number>> {
-        return PolynomialBasisLogic.generateBasis(degree, resolution);
-    }
-}
-
-export class SplineBase extends Basis {
-    override calc(degree: number, resolution: number, knots: Array<[number, number]>): Array<Array<number>> {
-        //const baseFunctions = SplineLogic.generateBaseFunctions(knots, degree, resolution);
-        //return baseFunctions[baseFunctions.length - 1];
-        return new Array<Array<number>>();
     }
 }
