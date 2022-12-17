@@ -158,17 +158,19 @@ export class SplineLogic {
      * @returns a tuple in the from of `[points, intermediates]`
      */
     public static generateCurve(knotVector: KnotVector, controlPoints: Vector3[],
-        degree: number, resolution: number): [Vector3[], Vector3[]] {
+        degree: number, resolution: number): [Vector3[], Vector3[], number[][]] {
 
         // 1. calculate the curve points
         const curve: Vector3[] = [];
+        const baseFunctions: number[][] = [];
 
         const [leftBound, rightBound] = knotVector.support(degree);
         const step = roundN((rightBound - leftBound) / resolution);
 
         for (let u = leftBound; u < rightBound; u += step) {
-            const [point, _] = this.evaluatePosition(knotVector, controlPoints, degree, u);
+            const [point, _, baseFunctionsAtU] = this.evaluatePosition(knotVector, controlPoints, degree, u);
             curve.push(point);
+            baseFunctions.push(baseFunctionsAtU);
         }
 
         // 2. calculate the tangents
@@ -199,7 +201,7 @@ export class SplineLogic {
             tangents.push(tangent);
         }
 
-        return [curve, tangents];
+        return [curve, tangents, baseFunctions];
     }
 
     /**
