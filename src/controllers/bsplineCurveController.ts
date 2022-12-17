@@ -74,6 +74,8 @@ export class BSplineCurveController extends Controller {
 
         curve.add(this.object(), "resolution", 16, 1024, 2)
             .name("Resolution").onChange(() => this.changed());
+        // curve.add(this, "_degree", 1, 8, 1)
+        //     .name("Degree").onChange(() => this.changed());
         curve.add(this._knots, "knots").listen();
         curve.add(this, "_u", -100, 100, 1).name("Insert Knot");
         curve.add(this, "insert").onFinishChange(() => this.changed());
