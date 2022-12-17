@@ -2,10 +2,11 @@ import { Vector3 } from "three";
 import { Canvas } from "../core/canvas";
 import { Controller } from "./controller";
 import { connect } from "../core/connector";
-import { PolyBase } from "../components/basis";
 import { BezierCurveLogic } from "../logic/bezierCurveLogic";
 import { Curve, CurvePosition } from "../components/curve";
 import { ControlPoints1d } from "../components/controlPoints";
+import { Basis } from "../components/basis";
+import { PolynomialBasisLogic } from "../logic/polynomialBasisLogic";
 
 export class BezierCurveController extends Controller {
 
@@ -13,7 +14,7 @@ export class BezierCurveController extends Controller {
     /// CONSTRUCTOR, GETTER and SETTER
     /// ----------------------------------------------------------------------- 
 
-    private _polynomialBasis: PolyBase;
+    private _basis: Basis;
 
     constructor(canvasWidth: () => number, canvasHeight: () => number) {
         super();
@@ -28,13 +29,13 @@ export class BezierCurveController extends Controller {
         // 3. curve
         this.addObject(new Curve());
 
-        this._polynomialBasis = new PolyBase();
-        this.canvas[1].append(this._polynomialBasis);
+        this._basis = new Basis();
+        this.canvas[1].append(this._basis);
 
         // 4. signals
         this.connectStandardSignals();
         connect(this.object().signalControlPointsState, this.position().slotControlPointsState);
-        connect(this.position().signalTime, this._polynomialBasis.slotTime);
+        connect(this.position().signalTime, this._basis.slotTime);
 
         this.changed();
     }
@@ -57,8 +58,7 @@ export class BezierCurveController extends Controller {
 
             this.object().set(points, controlPoints);
             this.position().set(points, tangents, intermediates);
-            this._polynomialBasis.set(controlPoints.length - 1, this.object().resolution);
-
+            this._basis.set(PolynomialBasisLogic.generateBasis(controlPoints.length - 1, this.object().resolution));
             this.needsUpdate = false;
         }
     }

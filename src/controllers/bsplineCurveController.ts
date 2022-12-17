@@ -6,6 +6,7 @@ import { Canvas } from "../core/canvas";
 import { Controller } from "./controller";
 import { SplineLogic, KnotVector } from "../logic/splinesLogic";
 import { primaryColor } from "../core/color";
+import { Basis } from "../components/basis";
 
 export class BSplineCurveController extends Controller {
 
@@ -13,6 +14,7 @@ export class BSplineCurveController extends Controller {
     /// CONSTRUCTOR, GETTER and SETTER
     /// ----------------------------------------------------------------------- 
 
+    private _basis: Basis;
     private _knots: KnotVector;
     private _degree: number;
     private _u: number;
@@ -24,6 +26,7 @@ export class BSplineCurveController extends Controller {
 
         // 1. create canvas
         this.addCanvas(new Canvas(canvasWidth, canvasHeight));
+        this.addCanvas(new Canvas(canvasWidth, canvasHeight, false));
 
         this._degree = 3;
         this._knots = new KnotVector([0, 0, 0, 2, 4, 4, 5, 7, 7, 7, 9, 10, 12, 12],
@@ -34,6 +37,9 @@ export class BSplineCurveController extends Controller {
 
         // 3. curve
         this.addObject(new Curve());
+
+        this._basis = new Basis();
+        this.canvas[1].append(this._basis);
 
         // 4. signals
         this.connectStandardSignals();
@@ -60,6 +66,7 @@ export class BSplineCurveController extends Controller {
 
             this.object().set(points, controlPoints);
             this.position().set(points, tangent, []);
+            // this._basis.set(...);
 
             this.needsUpdate = false;
         }
