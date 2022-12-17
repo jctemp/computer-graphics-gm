@@ -37,4 +37,18 @@ function pascalRow(n: number): number[] {
     return result;
 }
 
-export { lerp, roundN, binomial, pascalRow }
+/**
+ * transpose a given 2d number vector
+ */
+function transpose(matrix: number[][]): number[][] {
+    const transposed: number[][] = [];
+    for (let idx = 0; idx < matrix[0].length; idx++) {
+        transposed[idx] = [];
+        for (let jdx = 0; jdx < matrix.length; jdx++) {
+            transposed[idx].push(matrix[jdx][idx]);
+        }
+    }
+    return transposed;
+}
+
+export { lerp, roundN, binomial, pascalRow, transpose }
