@@ -25,4 +25,16 @@ function binomial(n: number, k: number): number {
     return coefficient;
 }
 
-export { lerp, roundN, binomial }
+/**
+ * Calculates the binomial coefficients for a whole line of degree.
+ */
+function pascalRow(n: number): number[] {
+    const result = []
+    for (let j = 0; j <= n; j++) {
+        result.push(binomial(n, j));
+    }
+
+    return result;
+}
+
+export { lerp, roundN, binomial, pascalRow }

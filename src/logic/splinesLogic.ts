@@ -1,5 +1,5 @@
 import { Vector3 } from "three";
-import { lerp, roundN } from "../core/utils";
+import { lerp, pascalRow, roundN } from "../core/utils";
 
 /**
  * The `KnotVector` class is an abstraction to handle the knots
@@ -211,7 +211,7 @@ export class SplineLogic {
      * @returns 
      */
     public static evaluatePosition(knotVector: KnotVector, controlPoints: Vector3[],
-        degree: number, insertKnot: number): [Vector3, Vector3[][]] {
+        degree: number, insertKnot: number): [Vector3, Vector3[][], number[]] {
 
         // The first step is to determine the insertPosition of the current knot, which
         // is u ∈ [u_I, u_{I + 1}) where u is the `insertKnot`. 
@@ -222,14 +222,28 @@ export class SplineLogic {
         // stage we only want the inital points required at the r-th column of the triangle.
         const intermediates: Vector3[][] = [];
         intermediates.push([]);
-        for (let j = 0; j <= degree - r; j++) {
-            intermediates[0].push(controlPoints[I - degree + j + 1].clone());
+
+        // pre calculate the left bound index of the control points (because it is needed for later use)
+        const mostLeftDIndex = I - degree + 1;
+        for (let j = mostLeftDIndex; j <= I - r + 1; j++) {
+            intermediates[0].push(controlPoints[j].clone());
         }
+
+        const pascal = pascalRow(degree - r - 1);
+        const alphas: number[] = [];
+        // fill intermediate alpha values with 1 as the neutral element for multiplikation
+        pascal.forEach(value => {
+            for (let i = 0; i < value; i++) {
+                alphas.push(1);
+                alphas.push(1);
+            }
+        });
 
         // The algorithm starts at the r-th column with n-k-r entries. That's why we need to
         // subtract `r` from `degree` as there are `degree` columns.
         for (let k = 1; k <= degree - r; k++) {
             intermediates.push([]);
+            let alphaIndex = 0;
             for (let j = 0; j <= degree - k - r; j++) {
                 // This is effectivly calculating alpha on multiple lines. As `findKnot` is
                 // in O(n), we precalucalted the knots.
@@ -237,8 +251,19 @@ export class SplineLogic {
                 const maxKnot = knotVector.findKnot(I + 1 + j);
                 const denominator = maxKnot - minKnot;
 
-                if (denominator === 0) throw new Error("Check required");
                 const alpha = (insertKnot - minKnot) / denominator;
+
+                // mulitply all paths in the alphas-vector that lead to this specific cpoint in calculation
+                // by alpha or (1 - alpha). this must happen a specific amount of times consecutively and at
+                // a certain interval length, at which the alpha has an impact. TODO explain better gl hf
+                for (let idx = 0; idx < pascal[j]; idx++) {
+                    for (let jdx = 0; jdx < 2 ** (k-1); jdx++) {
+                        alphas[alphaIndex++] *= (1 - alpha);
+                    }
+                    for (let jdx = 0; jdx < 2 ** (k-1); jdx++) {
+                        alphas[alphaIndex++] *= alpha;
+                    }
+                }
 
                 // The used points in the lerp represent the controlPoints at a specific 
                 // iteration. Here the k - 1 is the previous iteration and j as j + 1 
@@ -247,9 +272,40 @@ export class SplineLogic {
             }
         }
 
+        const summedAlphas: number[] = [];
+        if (alphas.length == 0) {
+            // in case r = degree all previous loops are degenerated and a 1 needs to be placed manually
+            summedAlphas.push(1);
+        } else {
+            // sum up all conditional paths for a certain d
+            let alphaIndex = 0;
+            pascalRow(degree - r).forEach(value => {
+                let sum = 0;
+                for (let idx = 0; idx < value; idx++) {
+                    sum += alphas[alphaIndex++];
+                }
+                summedAlphas.push(sum);
+            });
+        }
+
+        const coefficients = [];
+        // fill all N values before the left most used d with 0
+        for (let idx = 0; idx < mostLeftDIndex; idx++) {
+            coefficients.push(0);
+        }
+        // write all calculated alphas into the resulting coefficient vector
+        summedAlphas.forEach(value => {
+            coefficients.push(value);
+        });
+        // fill all remaining N values with 0
+        for (let idx = mostLeftDIndex + summedAlphas.length; idx < controlPoints.length; idx++) {
+            coefficients.push(0);
+        }
+
+        // split up the resulting point from the intermediate ones
         const point = intermediates.pop()?.at(0);
         if (point === undefined) throw new Error("Evaluate position: no point calculated.");
 
-        return [point, intermediates];
+        return [point, intermediates, coefficients];
     }
 }
