@@ -58,7 +58,7 @@ export class BezierCurveController extends Controller {
 
             this.object().set(points, controlPoints);
             this.position().set(points, tangents, intermediates);
-            this._basis.set(PolynomialBasisLogic.generateBasis(controlPoints.length - 1, this.object().resolution));
+            this._basis.set(PolynomialBasisLogic.generateBernsteinBasis(controlPoints.length - 1, this.object().resolution));
             this.needsUpdate = false;
         }
     }

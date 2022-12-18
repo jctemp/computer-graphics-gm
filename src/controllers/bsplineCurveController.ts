@@ -8,6 +8,7 @@ import { SplineLogic, KnotVector } from "../logic/splinesLogic";
 import { primaryColor } from "../core/color";
 import { Basis } from "../components/basis";
 import { transpose } from "../core/utils";
+import { PolynomialBasisLogic } from "../logic/polynomialBasisLogic";
 
 export class BSplineCurveController extends Controller {
 
@@ -67,15 +68,12 @@ export class BSplineCurveController extends Controller {
 
             this.object().set(points, controlPoints);
             this.position().set(points, tangent, []);
+            let basises = PolynomialBasisLogic.generateNormalisedBasis(this._knots, controlPoints.length - 1, this.object().resolution);
+            // this._basis.set();
 
-            // const test:number[] = [];
-            // basis.forEach(value => {
-            //     test.push(value[3])
-            // });
-            // console.log(test)
-
-            const bT = transpose(basis);
-            this._basis.set(bT);
+            // get highest degree functions for writing their values to the diagram
+            const coefficients = basises[basises.length - 1];
+            this._basis.set(coefficients);
 
             this.needsUpdate = false;
         }
