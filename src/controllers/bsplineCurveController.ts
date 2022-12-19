@@ -1,14 +1,11 @@
 import { GUI } from "dat.gui";
-import { Vector3 } from "three";
 import { ControlPoints1d } from "../components/controlPoints";
 import { Curve, CurvePosition } from "../components/curve";
 import { Canvas } from "../core/canvas";
 import { Controller } from "./controller";
-import { SplineLogic, KnotVector } from "../logic/splinesLogic";
-import { primaryColor } from "../core/color";
+import { SplineLogic } from "../logic/splinesLogic";
 import { Basis } from "../components/basis";
-import { transpose } from "../core/utils";
-import { PolynomialBasisLogic } from "../logic/polynomialBasisLogic";
+import { KnotVector } from "../logic/knotVector";
 
 export class BSplineCurveController extends Controller {
 
@@ -21,6 +18,19 @@ export class BSplineCurveController extends Controller {
     private _degree: number;
     private _u: number;
 
+    public get degree(): number {
+        return this._degree;
+    }
+    public set degree(value: number) {
+        // we need to check this invariance as we have to ensure that the curve is
+        // not only defined in a point as the derivative is then not existent.
+        // Therefore, we check the index range of the support.
+        const [leftBoundIndex, rightBoundIndex] = this._knots.supportRange(value);
+        if (rightBoundIndex - leftBoundIndex < 1) return;
+        if (value === 1) return;
+        this._degree = value;
+    }
+
     constructor(canvasWidth: () => number, canvasHeight: () => number) {
         super();
 
@@ -30,12 +40,11 @@ export class BSplineCurveController extends Controller {
         this.addCanvas(new Canvas(canvasWidth, canvasHeight));
         this.addCanvas(new Canvas(canvasWidth, canvasHeight, false));
 
+        this._knots = new KnotVector([0, 2, 4, 6, 8, 10]);
         this._degree = 3;
-        this._knots = new KnotVector([0, 0, 0, 2, 4, 4, 5, 7, 7, 7, 9, 10, 12, 12],
-            primaryColor.length + this._degree); // d + n - 1 = k
 
         // 2. control points
-        this.appendControlPoints(new ControlPoints1d(this._knots.requiredControlPoints(this._degree)));
+        this.appendControlPoints(new ControlPoints1d(this._knots.controlPolygon(this.degree)));
 
         // 3. curve
         this.addObject(new Curve());
@@ -55,25 +64,18 @@ export class BSplineCurveController extends Controller {
 
     override update(): void {
         if (this.needsUpdate) {
-            this.points().max = this._knots.requiredControlPoints(this._degree);
-
-            let controlPoints = this._controlPoints.children.map((p, idx) => {
-                if (idx < this.points().max)
-                    return p.position.clone();
-                else
-                    return new Vector3(Number.MAX_SAFE_INTEGER);
-            }).filter(value => value.x !== Number.MAX_SAFE_INTEGER);
-
-            const [points, tangent, basis] = SplineLogic.generateCurve(this._knots, controlPoints, this._degree, this.object().resolution)
+            this.points().max = this._knots.controlPolygon(this.degree);
+            let controlPoints = this.points().children.map(p => p.position.clone());
+            const [points, tangent, basis] = SplineLogic.generateCurve(this._knots, controlPoints, this.degree, this.object().resolution)
 
             this.object().set(points, controlPoints);
             this.position().set(points, tangent, []);
-            let basises = PolynomialBasisLogic.generateNormalisedBasis(this._knots, controlPoints.length - 1, this.object().resolution);
-            // this._basis.set();
+            this._basis.set(basis);
+            // let basises = PolynomialBasisLogic.generateNormalisedBasis(this._knots, controlPoints.length - 1, this.object().resolution);
 
             // get highest degree functions for writing their values to the diagram
-            const coefficients = basises[basises.length - 1];
-            this._basis.set(coefficients);
+            // const coefficients = basises[basises.length - 1];
+            // this._basis.set(coefficients);
 
             this.needsUpdate = false;
         }
@@ -88,12 +90,12 @@ export class BSplineCurveController extends Controller {
 
         curve.add(this.object(), "resolution", 16, 1024, 2)
             .name("Resolution").onChange(() => this.changed());
-        curve.add(this, "_degree", 1, 8, 1)
+        curve.add(this, "degree", 1, 8, 1)
             .name("Degree").onChange(() => this.changed());
         curve.add(this._knots, "knots").listen().name("Knot Vector");
-        curve.add(this, "insert").onFinishChange(() => this.changed()).name("Insert Knot Value");
-        curve.add(this, "delete").onFinishChange(() => this.changed()).name("Delete Knot Value");
-        curve.add(this, "_u", -100, 100, 1).name("Knot Value");
+        curve.add(this, "addKnot").onFinishChange(() => this.changed()).name("Add Knot Value");
+        curve.add(this, "removeKnot").onFinishChange(() => this.changed()).name("Remove Knot Value");
+        curve.add(this, "_u", -100, 100, 1).name("Current Knot Value");
 
         curvePoint.add(this.position(), "t", 0, 1, .01)
             .name("t (step)");
@@ -115,17 +117,15 @@ export class BSplineCurveController extends Controller {
      * Wrapper to make insert call. Only for the UI.
      */
     // @ts-ignore
-    private insert(): void {
-        const [_, m] = this._knots.findIndex(this._u);
-        if (m === this._degree) return;
-        this._knots.insert(this._u);
+    private addKnot(): void {
+        this._knots.addKnot(this._u, this.degree);
     }
 
     /**
      * Wrapper to make delete call. Only for the UI.
      */
     // @ts-ignore
-    private delete(): void {
-        this._knots.delete(this._u);
+    private removeKnot(): void {
+        this._knots.removeKnot(this._u, this.degree);
     }
 }
