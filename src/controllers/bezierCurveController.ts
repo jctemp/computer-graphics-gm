@@ -39,11 +39,11 @@ export class BezierCurveController extends Controller {
 
         this.changed();
     }
-    
+
     /// -----------------------------------------------------------------------
     /// OVERRIDES
     /// -----------------------------------------------------------------------
-    
+
     override update(): void {
         if (this.needsUpdate) {
             let controlPoints = this._controlPoints.children.map((p, idx) => {
@@ -74,6 +74,8 @@ export class BezierCurveController extends Controller {
             .name("Control Points Count")
         curve.add(this.object(), "resolution", 16, 1024, 2)
             .name("Resolution").onChange(() => this.changed());
+        curve.add(this, "toggleControlPoints")
+            .name("Toggle Control Points");
         curve.add(this.object(), "toggleControlPolygon")
             .name("Toggle Control Polygon");
 

@@ -79,25 +79,38 @@ export class BSplineCurveController extends Controller {
     }
 
     override gui(gui: GUI): void {
-        const curve = gui.addFolder("BSplines")
+        const curve = gui.addFolder("BSplines");
+        const insertion = gui.addFolder("Knot insertions");
         const curvePoint = gui.addFolder("BSpline Position");
 
         curve.open();
+        insertion.open();
         curvePoint.open();
+
 
         curve.add(this.object(), "resolution", 16, 1024, 2)
             .name("Resolution").onChange(() => this.changed());
         curve.add(this, "degree", 1, 8, 1)
             .name("Degree").onChange(() => this.changed());
-        curve.add(this._knots, "knots").listen().name("Knot Vector");
-        curve.add(this, "addKnot").onFinishChange(() => this.changed()).name("Add Knot Value");
-        curve.add(this, "removeKnot").onFinishChange(() => this.changed()).name("Remove Knot Value");
-        curve.add(this, "_u", -100, 100, 1).name("Current Knot Value");
+        curve.add(this, "toggleControlPoints")
+            .name("Toggle Control Points");
+        curve.add(this.object(), "toggleControlPolygon")
+            .name("Toggle Control Polygon");
+
+        insertion.add(this._knots, "knots").listen().name("Knot Vector");
+        insertion.add(this, "addKnot").onFinishChange(() => this.changed()).name("Add Knot Value");
+        insertion.add(this, "removeKnot").onFinishChange(() => this.changed()).name("Remove Knot Value");
+        insertion.add(this, "_u", -100, 100, 1).name("Current Knot Value");
 
         curvePoint.add(this.position(), "t", 0, 1, .01)
             .name("t (step)");
         curvePoint.add(this.position(), "size", .1, 2, .1);
-        curvePoint.add(this.position(), "magnitude", 0, 2, .1);
+        curvePoint.add(this.position(), "magnitude", 0, 2, .1)
+            .name("Tangent Magnitude");
+        curvePoint.add(this.position(), "toggleIntermediates")
+            .name("Toggle Intermediates");
+        curvePoint.add(this.position(), "toggleCurrentPoint")
+            .name("Toggle Current Point");
     }
 
     private points(): ControlPoints1d {

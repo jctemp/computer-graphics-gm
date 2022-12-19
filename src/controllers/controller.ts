@@ -75,6 +75,13 @@ export abstract class Controller {
         this._position = type.getPosition();
         this.canvas[0].append(this._position);
     }
+    public toggleControlPoints(): void {
+        if (this.canvas[0].contains(this._controlPoints)) {
+            this._controlPoints.removeFromParent();
+        } else {
+            this.canvas[0].append(this._controlPoints);
+        }
+    }
 
     /// -----------------------------------------------------------------------
     /// ABSTRACT FUNCTIONS FOR OVERRIDE

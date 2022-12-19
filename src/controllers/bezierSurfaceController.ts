@@ -17,7 +17,7 @@ export class BezierSurfaceController extends Controller {
 
         // 1. create canvas
         this.addCanvas(
-            new Canvas(canvasWidth, canvasHeight), 
+            new Canvas(canvasWidth, canvasHeight),
             [new DirectionalLight(0xFFFFFF, .9), new AmbientLight(0x111111)]
         );
 
@@ -57,6 +57,7 @@ export class BezierSurfaceController extends Controller {
     override gui(gui: GUI): void {
         // general control
         const control = gui.addFolder("Control Objects");
+        control.add(this, "toggleControlPoints").name("Toggle Control Points");
         control.add(this.object(), "toggleControlMesh").name("Toggle Control Mesh");
         control.add(this._controlPoints, "toggleControlPoints").name("Toggle Control Points");
         control.add(this._controlPoints, "xMax", 3, ControlPoints2d.MAX, 1).name("X Control Points");
