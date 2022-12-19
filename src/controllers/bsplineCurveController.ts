@@ -6,6 +6,7 @@ import { Controller } from "./controller";
 import { SplineLogic } from "../logic/splinesLogic";
 import { Basis } from "../components/basis";
 import { KnotVector } from "../logic/knotVector";
+import { PolynomialBasisLogic } from "../logic/polynomialBasisLogic";
 
 export class BSplineCurveController extends Controller {
 
@@ -66,16 +67,12 @@ export class BSplineCurveController extends Controller {
         if (this.needsUpdate) {
             this.points().max = this._knots.controlPolygon(this.degree);
             let controlPoints = this.points().children.map(p => p.position.clone());
-            const [points, tangent, basis] = SplineLogic.generateCurve(this._knots, controlPoints, this.degree, this.object().resolution)
+            const [points, tangent, _basis] = SplineLogic.generateCurve(this._knots, controlPoints, this.degree, this.object().resolution)
 
             this.object().set(points, controlPoints);
             this.position().set(points, tangent, []);
+            let basis = PolynomialBasisLogic.generateNormalisedBasis(this._knots, controlPoints.length - 1, this.object().resolution);
             this._basis.set(basis);
-            // let basises = PolynomialBasisLogic.generateNormalisedBasis(this._knots, controlPoints.length - 1, this.object().resolution);
-
-            // get highest degree functions for writing their values to the diagram
-            // const coefficients = basises[basises.length - 1];
-            // this._basis.set(coefficients);
 
             this.needsUpdate = false;
         }

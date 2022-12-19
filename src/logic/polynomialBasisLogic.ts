@@ -1,5 +1,5 @@
 import { binomial, roundN } from "../core/utils";
-import { KnotVector } from "./splinesLogic";
+import { KnotVector } from "./knotVector";
 
 export class PolynomialBasisLogic {
     /**
@@ -21,69 +21,74 @@ export class PolynomialBasisLogic {
         return baseFunctions;
     }
 
-    public static generateNormalisedBasis(knotVector: KnotVector, degree: number, resolution: number): number[][][] {
-        const bases: number[][][] = [];
-        const knotVectorIdxMax = knotVector.size() - 1;
+    public static generateNormalisedBasis(knotVector: KnotVector, maxDegree: number, resolution: number,
+        complete: boolean = true): number[][] {
 
-        // u values
-        let min = knotVector.findKnot(0);
-        let max = knotVector.findKnot(knotVectorIdxMax);
+        // determine the range for the u values
+        const [min, max] = complete ? [knotVector.at(0), knotVector.at(knotVector.size - 1)] : knotVector.support(maxDegree);
+
+        // check invariance that the knotvector is not length 0
+        if (max === undefined || min === undefined)
+            throw new Error("KnotVector is empty");
+
+        // evaluate all u's based on targeted resolution
         let step = (max - min) / resolution;
-        let values: number[] = [];
+        let insertionKnots: number[] = [];
         for (let h = 0; h <= resolution; h++) {
-            values.push(roundN(min + h * step));
+            insertionKnots.push(roundN(min + h * step));
         }
 
-        // handle fencepost n = 0, because previous values do not exist
-        bases.push([]);
-        for (let idx = 0; idx <= knotVectorIdxMax; idx++) {
-            bases[0].push([]);
+        // START calculating the basis functions
+        const basis: number[][][] = [];
+
+        // STEP 1: evaluate constants
+        basis.push([]);
+        for (let idx = 0; idx < knotVector.size; idx++) {
+            basis[0].push([]);
             // for each index
             for (let u = 0; u <= resolution; u++) {
-                bases[0][idx].push(this.calculateNValue(knotVector, 0, idx, values[u], 0, 0));
+                basis[0][idx].push(this.calculateNValue(knotVector, 0, idx, insertionKnots[u], 0, 0));
             }
         }
 
-        // for each degree
-        for (let n = 1; n <= degree; n++) {
-            bases.push([]);
-            // for each segment
-            for (let idx = 0; idx <= knotVectorIdxMax - n; idx++) {
-                bases[n].push([]);
-                // for each index
+        // STEP 2: for all degrees greater zero, derive new basis from prvious
+        for (let degree = 1; degree <= maxDegree; degree++) {
+            basis.push([]);
+            for (let segment = 0; segment <= knotVector.size - 1 - degree; segment++) {
+                basis[degree].push([]);
                 for (let u = 0; u <= resolution; u++) {
-                    bases[n][idx].push(
-                        this.calculateNValue(knotVector, n - 1, idx, values[u],
-                            bases[n - 1][idx][u], bases[n - 1][idx + 1][u])
+                    basis[degree][segment].push(
+                        this.calculateNValue(knotVector, degree - 1, segment, insertionKnots[u],
+                            basis[degree - 1][segment][u], basis[degree - 1][segment + 1][u])
                     );
                 }
             }
         }
 
-        return bases;
+        // STEP 3: only return last iteration as this contains the basis
+        return basis[basis.length - 1];
     }
 
-    public static calculateNValue(
-        knots: KnotVector,
-        degree: number,
-        index: number,
-        u: number,
-        prevN1: number,
-        prevN2: number): number {
+    public static calculateNValue(knots: KnotVector, degree: number, index: number,
+        u: number, prevN1: number, prevN2: number): number {
         // pre calculate u values from indices
-        const ui = knots.findKnot(index);
-        const ui1 = knots.findKnot(index + degree + 1);
+        const ui = knots.at(index);
+        const uiDeg1 = knots.at(index + degree + 1);
 
         // CASE 1: u lies outside the support range -> return 0
-        if (u < ui || u >= ui1) return 0;
-        // degree is 0 -> constant line of 1
+        if (ui === undefined || uiDeg1 === undefined || u < ui || u >= uiDeg1) return 0;
+        // CASE 2: degree is 0 -> constant line of 1
         if (degree == 0) return 1;
 
-        // CASE 2: calculate from alpha and previous N values
-        let fac1 = (u - ui) /
-            (knots.findKnot(index + degree) - ui);
-        let fac2 = (ui1 - u) /
-            (ui1 - knots.findKnot(index + 1));
+        const uiDeg = knots.at(index + degree);
+        const ui1 = knots.at(index + 1);
+
+        if (uiDeg === undefined || ui1 === undefined)
+            throw new Error("Should not be undefined.");
+
+        // CASE 3: calculate from alpha and previous N values
+        let fac1 = (u - ui) / (uiDeg - ui);
+        let fac2 = (uiDeg1 - u) / (uiDeg1 - ui1);
         // prevent e.g. dividing by 0 (which happens)
         if (!isFinite(fac1)) fac1 = 0;
         if (!isFinite(fac2)) fac2 = 0;
