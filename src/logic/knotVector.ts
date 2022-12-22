@@ -18,8 +18,8 @@ export class KnotVector {
      * @param _index number in the range of the vector
      * @returns the knot value or undefined if the index is not inside the range.
      */
-    public at(_index: number): number | undefined {
-        if (_index < 0) return undefined;
+    public at(_index: number): number {
+        if (_index < 0) throw new Error("Index was less than 0");
 
         let count = -1;
         for (const [knot, multiplicity] of this._knots) {
@@ -27,7 +27,7 @@ export class KnotVector {
             if (_index <= count) return knot;
         }
 
-        return undefined;
+        throw new Error("Index was greater equal size.");
     }
 
     /**
@@ -116,13 +116,12 @@ export class KnotVector {
      * @returns the interval with [u_(n-1), u_(L)]
      */
     public support(_degree: number): [number, number] {
-        if (_degree < 1 || this.size < _degree)
-            return [Number.MIN_SAFE_INTEGER, Number.MIN_SAFE_INTEGER];
+        if (_degree < 1) throw new Error("Degree of 0 is invalid");
+        else if (this.size < _degree) throw new Error("Degree greater than size is invalid");
+
         let a = this.at(_degree - 1);
         let b = this.at(this.size - _degree);
 
-        if (a === undefined || b === undefined)
-            throw new Error("Indexed knots are not part of the vector.");
         return [a, b];
     }
 
@@ -132,8 +131,9 @@ export class KnotVector {
      * @returns the interval with [n-1, L]
      */
     public supportRange(_degree: number): [number, number] {
-        if (_degree < 1 || this.size < _degree)
-            return [Number.MIN_SAFE_INTEGER, Number.MIN_SAFE_INTEGER];
+        if (_degree < 1) throw new Error("Degree of 0 is invalid");
+        else if (this.size < _degree) throw new Error("Degree greater than size is invalid");
+
         return [_degree - 1, this.size - _degree];
     }
 
@@ -143,11 +143,7 @@ export class KnotVector {
      * @returns a tuple with controlPointsCount
      */
     public controlPolygon(_degree: number): number {
-        let count = 0;
-        for (let idx = _degree - 1; idx < this.size; idx++) {
-            count++;
-        }
-        return count;
+        return this.size - _degree + 1;
     }
 
     public clone(): KnotVector {

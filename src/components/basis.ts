@@ -15,6 +15,8 @@ export class Basis extends Group {
      * @param resolution sampling accuracy
      */
     public set(coefficients: number[][]): void {
+        if (coefficients.length == 0) return;
+        
         while (this.children.length > 0) {
             const child = this.children.pop();
             child?.removeFromParent();

@@ -11,8 +11,8 @@ describe("KnotVector", () => {
         knotVector._knots = KNOT_VECTOR_TUPLE;
         knotVector.size = KNOT_VECTOR_LENGTH;
 
-        const indices = [-1, 0, 2, 3, 4, 5, 7, 8];
-        const results = [undefined, 0, 0, 1, 2, 3, 3, undefined];
+        const indices = [0, 2, 3, 4, 5, 7];
+        const results = [0, 0, 1, 2, 3, 3];
 
         for (let idx = 0; idx < indices.length; idx++) {
             let knot = knotVector.at(indices[idx]);
@@ -54,7 +54,7 @@ describe("KnotVector", () => {
         knotVector.removeKnot(2);
 
         expect(knotVector.size).toEqual(KNOT_VECTOR_LENGTH - 2);
-        for (let idx = 0; idx < KNOT_VECTOR_LENGTH; idx++) {
+        for (let idx = 0; idx < KNOT_VECTOR_LENGTH - 2; idx++) {
             let knot = knotVector.at(idx);
             expect(knot).toEqual([0, 0, 1, 3, 3, 3][idx]);
         }

@@ -3,10 +3,10 @@ import { ControlPoints1d } from "../components/controlPoints";
 import { Curve, CurvePosition } from "../components/curve";
 import { Canvas } from "../core/canvas";
 import { Controller } from "./controller";
-import { SplineLogic } from "../logic/splinesLogic";
+import { SplineLogic } from "../logic/splinesLogic.ts";
 import { Basis } from "../components/basis";
 import { KnotVector } from "../logic/knotVector";
-import { PolynomialBasisLogic } from "../logic/polynomialBasisLogic";
+import { transpose } from "../core/utils";
 
 export class BSplineCurveController extends Controller {
 
@@ -27,7 +27,7 @@ export class BSplineCurveController extends Controller {
         // not only defined in a point as the derivative is then not existent.
         // Therefore, we check the index range of the support.
         const [leftBoundIndex, rightBoundIndex] = this._knots.supportRange(value);
-        if (rightBoundIndex - leftBoundIndex < 1) return;
+        if (rightBoundIndex - leftBoundIndex < 2) return;
         if (value === 1) return;
         this._degree = value;
     }
@@ -41,7 +41,7 @@ export class BSplineCurveController extends Controller {
         this.addCanvas(new Canvas(canvasWidth, canvasHeight));
         this.addCanvas(new Canvas(canvasWidth, canvasHeight, false));
 
-        this._knots = new KnotVector([0, 2, 4, 6, 8, 10]);
+        this._knots = new KnotVector([-1, -1, 2, 3, 5, 5, 5, 7, 8, 10, 10]);
         this._degree = 3;
 
         // 2. control points
@@ -67,12 +67,11 @@ export class BSplineCurveController extends Controller {
         if (this.needsUpdate) {
             this.points().max = this._knots.controlPolygon(this.degree);
             let controlPoints = this.points().children.map(p => p.position.clone());
-            const [points, tangent, _basis] = SplineLogic.generateCurve(this._knots, controlPoints, this.degree, this.object().resolution)
+            const [points, tangent, basis] = SplineLogic.generateCurve(this._knots, controlPoints, this.degree, this.object().resolution)
 
             this.object().set(points, controlPoints);
-            this.position().set(points, tangent, []);
-            let basis = PolynomialBasisLogic.generateNormalisedBasis(this._knots, controlPoints.length - 1, this.object().resolution);
-            this._basis.set(basis);
+            this.position().set(points, tangent, []);            
+            this._basis.set(transpose(basis));
 
             this.needsUpdate = false;
         }

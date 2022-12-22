@@ -16,46 +16,22 @@ export class SplineLogic {
 
         // 1. calculate the curve points
         const curve: Vector3[] = [];
-        const baseFunctions: number[][] = [];
+        const tangents: Vector3[] = [];
+        const intermediates: Vector3[][][] = [];
+        const basisFunctions: number[][] = [];
 
         const [leftBound, rightBound] = knotVector.support(degree);
         const step = roundN((rightBound - leftBound) / resolution);
-        
+
         for (let u = leftBound; u < rightBound; u += step) {
-            const [point, _, baseFunctionsAtU] = this.evaluatePosition(knotVector, controlPoints, degree, u);
-            curve.push(point);
-            baseFunctions.push(baseFunctionsAtU);
+            const [_point, _tangent, _intermediates, _coefficients] = this.evaluatePosition(knotVector, controlPoints, degree, u);
+            curve.push(_point);
+            tangents.push(_tangent);
+            basisFunctions.push(_coefficients);
+            intermediates.push(_intermediates);
         }
 
-        // 2. calculate the tangents
-        const tangents: Vector3[] = [];
-        const degreeDerivates = degree - 1;
-
-        // 2.1 determine the difference between control points
-        const controlPointDeltas: Vector3[] = [];
-        for (let idx = 0; idx < controlPoints.length - 1; idx++) {
-            controlPointDeltas.push(controlPoints[idx + 1].clone().sub(controlPoints[idx]));
-        }        
-
-        // 2.2 we reduced the amount of available control points, therefore we need to remove
-        //     one knot from both ends to have the correct support. 
-        //     See relationship `L = K - n + 1`.
-        const knotVectorDeltas = knotVector.clone();
-        knotVectorDeltas.removeKnot(knotVectorDeltas.at(0), degreeDerivates);
-        knotVectorDeltas.removeKnot(knotVectorDeltas.at(knotVectorDeltas.size - 1), degreeDerivates);
-
-        const [leftBoundDeltas, rightBoundDeltas] = knotVectorDeltas.support(degreeDerivates);
-        const stepDeltas = roundN((rightBoundDeltas - leftBoundDeltas) / resolution);
-
-        // 2.3 Now, we can simply evaluate the curve tangents, as we apply de-boor for a function
-        //     of lower degree
-        for (let u = leftBoundDeltas; u < rightBoundDeltas; u += stepDeltas) {
-            let [tangent, _] = this.evaluatePosition(knotVectorDeltas, controlPointDeltas, degreeDerivates, u);
-            tangent.multiplyScalar(degreeDerivates);
-            tangents.push(tangent);
-        }
-
-        return [curve, tangents, baseFunctions];
+        return [curve, tangents, basisFunctions];
     }
 
     /**
@@ -67,8 +43,7 @@ export class SplineLogic {
      * @returns 
      */
     public static evaluatePosition(knotVector: KnotVector, controlPoints: Vector3[],
-        degree: number, insertKnot: number): [Vector3, Vector3[][], number[]] {
-
+        degree: number, insertKnot: number): [Vector3, Vector3, Vector3[][], number[]] {
         // The first step is to determine the insertPosition of the current knot, which
         // is u ∈ [u_I, u_{I + 1}) where u is the `insertKnot`. 
         // In addition, we can retrieve the multiplicity `r` of the `insertKnot`.
@@ -76,88 +51,81 @@ export class SplineLogic {
 
         // `intermediates` will contail the iterations of the de-boor algorithm. At this
         // stage we only want the inital points required at the r-th column of the triangle.
-        const intermediates: Vector3[][] = [];
-        intermediates.push([]);
-
-        // pre calculate the left bound index of the control points (because it is needed for later use)
-        const mostLeftDIndex = I - degree + 1;
-        for (let j = mostLeftDIndex; j <= I - r + 1; j++) {
-            let point = controlPoints[j];
-            if (point === undefined)
-                console.log(j, controlPoints);
-
-            intermediates[0].push(controlPoints[j].clone());
+        // This also solve the fence post problem.
+        const interm: Vector3[][] = [[]];
+        const leftBound = I - degree + 1;
+        for (let i = leftBound; i <= I + 1 - r; i++) {
+            interm[0].push(controlPoints[i].clone());
         }
 
-        // these pascal row of degree -1 is effectively used to split the alphas and (1 - alphas) from each other
-        // when calculating which paths factor belong to which d
-        let pascalIdx = degree - r - 1;
-        let pascal = pascalRow(pascalIdx);
-        const alphas: number[] = [];
-        // fill intermediate alpha values with 1 as the neutral element for multiplikation
-        pascal.forEach(value => {
-            for (let i = 0; i < value; i++) {
-                alphas.push(1);
-                alphas.push(1);
+        // The first index is the iteration and the second index can be seen as the position
+        // of the value inside the array. With a multiplicity greater than zero, we can skip
+        // calculations. Accordingly, we reindex the b's, as an example b(1,0) with r=1 
+        // becomes b(0,0).
+        //
+        //      r=0      r=1      r=2      r=3
+        //    
+        //     b(0,0) - b(1,0) - b(2,0) - b(3,0)
+        //            /        /        /       
+        //     b(0,1) - b(1,1) - b(2,1)
+        //            /        /
+        //     b(0,2) - b(1,2)
+        //            /
+        //     b(0,3) 
+        //
+        // We start at 1 because we already covered the 0-th iteration by filling the `interm`
+        // vector with the initial values.
+        //
+        const alphas: number[][] = [];
+        for (let k = 1, p = degree - r - 1; k <= degree - r; k++, p--) {
+            interm.push([]);
+            alphas.push([]);
+            // reducing the pushed values by increasing degree k
+            for (let j = 0; j <= degree - r - k; j++) {
+                // I - n + k + j, I + 1
+                const uMin = knotVector.at(I - degree + k + j);
+                const uMax = knotVector.at(I + 1 + j);
+                const alpha = (insertKnot - uMin) / (uMax - uMin);
+
+                interm[k].push(lerp(interm[k - 1][j], interm[k - 1][j + 1], alpha));
+                alphas[k - 1].push(alpha);
             }
-        });
+        }
 
-        // The algorithm starts at the r-th column with n-k-r entries. That's why we need to
-        // subtract `r` from `degree` as there are `degree` columns.
-        for (let k = 1; k <= degree - r; k++) {
-            intermediates.push([]);
-            let alphaIdx = 0;
-            pascal = pascalRow(pascalIdx--);
-            for (let j = 0; j <= degree - k - r; j++) {
-                // This is effectivly calculating alpha on multiple lines. As `findKnot` is
-                // in O(n), we precalucalted the knots.
-                const minKnot = knotVector.at(I - degree + k + j);
-                const maxKnot = knotVector.at(I + 1 + j);
-
-                if (minKnot === undefined || maxKnot === undefined)
-                    throw new Error("Accessed an index out of bounds.");
-
-                const denominator = maxKnot - minKnot;
-                const alpha = (insertKnot - minKnot) / denominator;
-
-                // mulitply all paths in the alphas-vector that lead to this specific cpoint in calculation
-                // by alpha or (1 - alpha). this must happen a specific amount of times consecutively and at
-                // a certain interval length, at which the alpha has an impact. TODO explain better gl hf
-                for (let idx = 0; idx < pascal[j]; idx++) {
-                    for (let jdx = 0; jdx < 2 ** (k - 1); jdx++) {
-                        alphas[alphaIdx++] *= (1 - alpha);
-                    }
-                    for (let jdx = 0; jdx < 2 ** (k - 1); jdx++) {
-                        alphas[alphaIdx++] *= alpha;
-                    }
+        // Still not sure if this is correct @Nick
+        //                                        1                                         n=0, k=n-1
+        //                   !a0                                     a0                     n=1, k=n-1 [a0]
+        //         !b0                  b0                 !b1                  b1          n=2, k=n-1 [b0, b1]
+        //    !c0       c0        !c1        c1       !c1       c1        !c2       c2      n=3, k=n-1 [c0, c1, c2]
+        // !d0   d0  !d1   d1  !d1   d1  !d1   d1  !d2   d2  !d2   d2  !d2   d2  !d3   d3   n=4, k=n-1 [d0, d1, d2, d3]
+        let paths: number[] = [1];
+        for (let alpha = alphas.pop(); alpha !== undefined; alpha = alphas.pop()) {
+            const working = [];
+            const pascal = pascalRow(alpha.length - 1);
+            for (let a = 0, p = 0; a < alpha.length; a++) {
+                for (let h = 0; h < pascal[a]; h++) {
+                    working.push(paths[p] * (1 - alpha[a]));
+                    working.push(paths[p] * alpha[a]);
+                    p++;
                 }
-
-                // The used points in the lerp represent the controlPoints at a specific 
-                // iteration. Here the k - 1 is the previous iteration and j as j + 1 
-                // the active control points at an iteration.
-                intermediates[k].push(lerp(intermediates[k - 1][j], intermediates[k - 1][j + 1], alpha));
             }
+            paths = working;
         }
 
         const summedAlphas: number[] = [];
-        if (alphas.length == 0) {
-            // in case r = degree all previous loops are degenerated and a 1 needs to be placed manually
-            summedAlphas.push(1);
-        } else {
-            // sum up all conditional paths for a certain d
-            let alphaIndex = 0;
-            pascalRow(degree - r).forEach(value => {
-                let sum = 0;
-                for (let idx = 0; idx < value; idx++) {
-                    sum += alphas[alphaIndex++];
-                }
-                summedAlphas.push(sum);
-            });
-        }
+
+        let index = 0;
+        pascalRow(degree - r).forEach(value => {
+            let sum = 0;
+            for (let idx = 0; idx < value; idx++) {
+                sum += paths[index++];
+            }
+            summedAlphas.push(sum);
+        })
 
         const coefficients = [];
         // fill all N values before the left most used d with 0
-        for (let idx = 0; idx < mostLeftDIndex; idx++) {
+        for (let idx = 0; idx < leftBound; idx++) {
             coefficients.push(0);
         }
         // write all calculated alphas into the resulting coefficient vector
@@ -165,14 +133,19 @@ export class SplineLogic {
             coefficients.push(value);
         });
         // fill all remaining N values with 0
-        for (let idx = mostLeftDIndex + summedAlphas.length; idx < controlPoints.length; idx++) {
+        for (let idx = leftBound + summedAlphas.length; idx < controlPoints.length; idx++) {
             coefficients.push(0);
         }
 
-        // split up the resulting point from the intermediate ones
-        const point = intermediates.pop()?.at(0);
-        if (point === undefined) throw new Error("Evaluate position: no point calculated.");
+        const point = interm.pop()?.at(0);
+        if (point === undefined) throw new Error("Point does not exists.");
 
-        return [point, intermediates, coefficients];
+        const iteration = interm.pop();
+        const tangent = (iteration === undefined) ? new Vector3() :
+            iteration[1].clone().sub(iteration[0]).multiplyScalar(degree);
+        if (iteration !== undefined) interm.push(iteration);
+
+        return [point, tangent, interm, coefficients];
+
     }
 }

@@ -133,16 +133,17 @@ export class CurvePosition extends ObjectPosition {
         const tangent = this._tangents[idx];
         const intermediate = this._intermediates[idx];
 
-        this._point.buffer = point;
-        if (tangent != undefined)
-        this._tangent.buffer = [
-            point, point.clone()
-                .add(tangent.clone().multiplyScalar(this._magnitude))
-        ];
-        if (intermediate != undefined)
-        intermediate.forEach((iteration, idx) => {
-            this._intermediate[idx].buffer = iteration;
-        });
+        if (point !== undefined)
+            this._point.buffer = point;
+        if (tangent !== undefined)
+            this._tangent.buffer = [
+                point, point.clone()
+                    .add(tangent.clone().multiplyScalar(this._magnitude))
+            ];
+        if (intermediate !== undefined)
+            intermediate.forEach((iteration, idx) => {
+                this._intermediate[idx].buffer = iteration;
+            });
     }
 
     /**
