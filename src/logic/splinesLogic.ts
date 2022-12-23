@@ -1,6 +1,10 @@
 import { Vector3 } from "three";
-import { lerp, pascalRow, roundN } from "../core/utils";
+import { lerp, roundN } from "../core/utils";
 import { KnotVector } from "./knotVector";
+
+// // @NICK
+// import { pascalRow } from "../core/utils";
+
 
 export class SplineLogic {
     /**
@@ -58,6 +62,20 @@ export class SplineLogic {
             interm[0].push(controlPoints[i].clone());
         }
 
+        // // @NICK
+        // // these pascal row of degree -1 is effectively used to split the alphas and (1 - alphas) from each other
+        // // when calculating which paths factor belong to which d
+        // let pascalIdx = degree - r - 1;
+        // let pascal = pascalRow(pascalIdx);
+        // const alphas: number[] = [];
+        // // fill intermediate alpha values with 1 as the neutral element for multiplikation
+        // pascal.forEach(value => {
+        //     for (let i = 0; i < value; i++) {
+        //         alphas.push(1);
+        //         alphas.push(1);
+        //     }
+        // });
+
         // The first index is the iteration and the second index can be seen as the position
         // of the value inside the array. With a multiplicity greater than zero, we can skip
         // calculations. Accordingly, we reindex the b's, as an example b(1,0) with r=1 
@@ -76,11 +94,12 @@ export class SplineLogic {
         // We start at 1 because we already covered the 0-th iteration by filling the `interm`
         // vector with the initial values.
         //
-        const alphas: number[][] = [];
         for (let k = 1, p = degree - r - 1; k <= degree - r; k++, p--) {
             interm.push([]);
-            alphas.push([]);
-            // reducing the pushed values by increasing degree k
+
+            // // @NICK
+            // let alphaIdx = 0;
+            // pascal = pascalRow(pascalIdx--);
             for (let j = 0; j <= degree - r - k; j++) {
                 // I - n + k + j, I + 1
                 const uMin = knotVector.at(I - degree + k + j);
@@ -88,54 +107,60 @@ export class SplineLogic {
                 const alpha = (insertKnot - uMin) / (uMax - uMin);
 
                 interm[k].push(lerp(interm[k - 1][j], interm[k - 1][j + 1], alpha));
-                alphas[k - 1].push(alpha);
+
+                // // @NICK
+                // for (let idx = 0; idx < pascal[j]; idx++) {
+                //     for (let jdx = 0; jdx < 2 ** (k - 1); jdx++) {
+                //         alphas[alphaIdx++] *= (1 - alpha);
+                //     }
+                //     for (let jdx = 0; jdx < 2 ** (k - 1); jdx++) {
+                //         alphas[alphaIdx++] *= alpha;
+                //     }
+                // }
             }
         }
 
-        // Still not sure if this is correct @Nick
-        //                                        1                                         n=0, k=n-1
-        //                   !a0                                     a0                     n=1, k=n-1 [a0]
-        //         !b0                  b0                 !b1                  b1          n=2, k=n-1 [b0, b1]
-        //    !c0       c0        !c1        c1       !c1       c1        !c2       c2      n=3, k=n-1 [c0, c1, c2]
-        // !d0   d0  !d1   d1  !d1   d1  !d1   d1  !d2   d2  !d2   d2  !d2   d2  !d3   d3   n=4, k=n-1 [d0, d1, d2, d3]
-        let paths: number[] = [1];
-        for (let alpha = alphas.pop(); alpha !== undefined; alpha = alphas.pop()) {
-            const working = [];
-            const pascal = pascalRow(alpha.length - 1);
-            for (let a = 0, p = 0; a < alpha.length; a++) {
-                for (let h = 0; h < pascal[a]; h++) {
-                    working.push(paths[p] * (1 - alpha[a]));
-                    working.push(paths[p] * alpha[a]);
-                    p++;
-                }
-            }
-            paths = working;
-        }
-
-        const summedAlphas: number[] = [];
-
-        let index = 0;
-        pascalRow(degree - r).forEach(value => {
-            let sum = 0;
-            for (let idx = 0; idx < value; idx++) {
-                sum += paths[index++];
-            }
-            summedAlphas.push(sum);
-        })
-
-        const coefficients = [];
-        // fill all N values before the left most used d with 0
-        for (let idx = 0; idx < leftBound; idx++) {
-            coefficients.push(0);
-        }
-        // write all calculated alphas into the resulting coefficient vector
-        summedAlphas.forEach(value => {
-            coefficients.push(value);
+        // @NICK remove to use yours
+        const coefficients: number[] = [];
+        controlPoints.forEach((_, idx) => {
+            coefficients.push(this.N(knotVector, degree + 1, idx, insertKnot));
         });
-        // fill all remaining N values with 0
-        for (let idx = leftBound + summedAlphas.length; idx < controlPoints.length; idx++) {
-            coefficients.push(0);
-        }
+
+        // // @NICK
+        // //                                        1                                         n=0, k=n-1
+        // //                   !a0                                     a0                     n=1, k=n-1 [a0]
+        // //         !b0                  b0                 !b1                  b1          n=2, k=n-1 [b0, b1]
+        // //    !c0       c0        !c1        c1       !c1       c1        !c2       c2      n=3, k=n-1 [c0, c1, c2]
+        // // !d0   d0  !d1   d1  !d1   d1  !d1   d1  !d2   d2  !d2   d2  !d2   d2  !d3   d3   n=4, k=n-1 [d0, d1, d2, d3]
+        // const summedAlphas: number[] = [];
+        // if (alphas.length == 0) {
+        //     // in case r = degree all previous loops are degenerated and a 1 needs to be placed manually
+        //     summedAlphas.push(1);
+        // } else {
+        //     // sum up all conditional paths for a certain d
+        //     let alphaIndex = 0;
+        //     pascalRow(degree - r).forEach(value => {
+        //         let sum = 0;
+        //         for (let idx = 0; idx < value; idx++) {
+        //             sum += alphas[alphaIndex++];
+        //         }
+        //         summedAlphas.push(sum);
+        //     });
+        // }
+
+        // const coefficients = [];
+        // // fill all N values before the left most used d with 0
+        // for (let idx = 0; idx < leftBound; idx++) {
+        //     coefficients.push(0);
+        // }
+        // // write all calculated alphas into the resulting coefficient vector
+        // summedAlphas.forEach(value => {
+        //     coefficients.push(value);
+        // });
+        // // fill all remaining N values with 0
+        // for (let idx = leftBound + summedAlphas.length; idx < controlPoints.length; idx++) {
+        //     coefficients.push(0);
+        // }
 
         const point = interm.pop()?.at(0);
         if (point === undefined) throw new Error("Point does not exists.");
@@ -147,5 +172,29 @@ export class SplineLogic {
 
         return [point, tangent, interm, coefficients];
 
+    }
+
+    public static N(U: KnotVector, n: number, j: number, u: number): number {
+        // This part is super weird. To be able to consider the functions
+        // at the boundary of the U vector, we must evaluate the the given
+        // position and check if it is NaN. We purposely introduced the NaN
+        // values to disregard the left or right side of the recursion by
+        // setting the factor to zero.
+        const ujm1 = U.at(j - 1);
+        const ujnm2 = U.at(j + n - 2);
+        let leftFactor = (u - ujm1) / (ujnm2 - ujm1);
+        if (!isFinite(leftFactor)) leftFactor = 0;
+
+        const uj = U.at(j);
+        const ujnm1 = U.at(j + n - 1);
+        let rightFactor = (ujnm1 - u) / (ujnm1 - uj);
+        if (!isFinite(rightFactor)) rightFactor = 0;
+
+        // termination case
+        if (n === 1) return (ujm1 <= u && u < uj) ? 1 : 0;
+
+        let result = leftFactor * this.N(U, n - 1, j, u) +
+            rightFactor * this.N(U, n - 1, j + 1, u);
+        return result;
     }
 }

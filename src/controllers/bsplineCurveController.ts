@@ -3,7 +3,7 @@ import { ControlPoints1d } from "../components/controlPoints";
 import { Curve, CurvePosition } from "../components/curve";
 import { Canvas } from "../core/canvas";
 import { Controller } from "./controller";
-import { SplineLogic } from "../logic/splinesLogic.ts";
+import { SplineLogic } from "../logic/splinesLogic";
 import { Basis } from "../components/basis";
 import { KnotVector } from "../logic/knotVector";
 import { transpose } from "../core/utils";
@@ -26,6 +26,7 @@ export class BSplineCurveController extends Controller {
         // we need to check this invariance as we have to ensure that the curve is
         // not only defined in a point as the derivative is then not existent.
         // Therefore, we check the index range of the support.
+        if (!this._knots.validDegree(value)) return;
         const [leftBoundIndex, rightBoundIndex] = this._knots.supportRange(value);
         if (rightBoundIndex - leftBoundIndex < 2) return;
         if (value === 1) return;

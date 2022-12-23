@@ -19,7 +19,7 @@ export class KnotVector {
      * @returns the knot value or undefined if the index is not inside the range.
      */
     public at(_index: number): number {
-        if (_index < 0) throw new Error("Index was less than 0");
+        if (_index < 0) return NaN;
 
         let count = -1;
         for (const [knot, multiplicity] of this._knots) {
@@ -27,7 +27,7 @@ export class KnotVector {
             if (_index <= count) return knot;
         }
 
-        throw new Error("Index was greater equal size.");
+        return NaN;
     }
 
     /**
@@ -144,6 +144,13 @@ export class KnotVector {
      */
     public controlPolygon(_degree: number): number {
         return this.size - _degree + 1;
+    }
+
+    public validDegree(_degree: number): boolean {
+        for (const [_, multiplicity] of this._knots) {
+            if (multiplicity > _degree) return false;
+        }
+        return true;
     }
 
     public clone(): KnotVector {
