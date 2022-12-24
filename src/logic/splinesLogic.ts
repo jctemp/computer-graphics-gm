@@ -7,6 +7,80 @@ import { KnotVector } from "./knotVector";
 
 
 export class SplineLogic {
+    public static generateCurve(knotVector: KnotVector, controlPoints: Vector3[],
+        degree: number, resolution: number): [Vector3[], Vector3[], number[][]] {
+            const strategy:number = 0;
+            if (strategy == 1) return this.generateReference(knotVector, controlPoints, degree, resolution);
+            
+            return this.generateExperiment(knotVector, controlPoints, degree, resolution);
+    }
+
+    
+
+    public static generateExperiment(knotVector: KnotVector, controlPoints: Vector3[],
+        degree: number, resolution: number): [Vector3[], Vector3[], number[][]] {
+
+        // 1. calculate the curve points
+        const curve: Vector3[] = [];
+        const tangents: Vector3[] = [];
+        const intermediates: Vector3[][][] = [];
+        const basisFunctions: number[][] = [];
+
+        const [leftBound, rightBound] = knotVector.support(degree);
+        const step = roundN((rightBound - leftBound) / resolution);
+
+        for (let u = leftBound; u < rightBound; u += step) {
+            const [I, r] = knotVector.indexOf(u);
+
+            const interm: Vector3[][] = [[]];
+            const leftBound = I - degree + 1;
+            for (let i = leftBound; i <= I + 1 - r; i++) {
+                interm[0].push(controlPoints[i].clone());
+            }
+
+            for (let k = 1, p = degree - r - 1; k <= degree - r; k++, p--) {
+                interm.push([]);
+                for (let j = 0; j <= degree - r - k; j++) {
+                    const uMin = knotVector.at(I - degree + k + j);
+                    const uMax = knotVector.at(I + 1 + j);
+                    const alpha = (u - uMin) / (uMax - uMin);
+    
+                    interm[k].push(lerp(interm[k - 1][j], interm[k - 1][j + 1], alpha));
+                }
+            }
+    
+            const coefficients: number[] = [];
+            controlPoints.forEach((_, idx) => {
+                coefficients.push(this.N(knotVector, degree + 1, idx, u));
+            });
+    
+            const point = interm.pop()?.at(0);
+            if (point === undefined) throw new Error("Point does not exists.");
+    
+            const iteration = interm.pop();
+            const tangent = (iteration === undefined) ? new Vector3() :
+                iteration[1].clone().sub(iteration[0]).multiplyScalar(degree);
+            if (iteration !== undefined) interm.push(iteration);
+    
+            curve.push(point);
+            tangents.push(tangent);
+            intermediates.push(interm);
+            basisFunctions.push(coefficients);
+        }
+
+        return [curve, tangents, basisFunctions];
+    }
+
+
+
+
+
+
+
+
+
+
+
     /**
      * The `generateCurve` function computes `1 / resolution` points on a the bspline.
      * @param knotVector contains a list of u's
@@ -15,7 +89,7 @@ export class SplineLogic {
      * @param resolution sampling count for the curve.
      * @returns a tuple in the from of `[points, intermediates]`
      */
-    public static generateCurve(knotVector: KnotVector, controlPoints: Vector3[],
+    public static generateReference(knotVector: KnotVector, controlPoints: Vector3[],
         degree: number, resolution: number): [Vector3[], Vector3[], number[][]] {
 
         // 1. calculate the curve points
@@ -43,15 +117,15 @@ export class SplineLogic {
      * @param knotVector the current state of knotes
      * @param controlPoints control points for the curve
      * @param degree the expected degree of polynomial segments
-     * @param insertKnot requested position regarding the knot vector
+     * @param u requested position regarding the knot vector
      * @returns 
      */
     public static evaluatePosition(knotVector: KnotVector, controlPoints: Vector3[],
-        degree: number, insertKnot: number): [Vector3, Vector3, Vector3[][], number[]] {
+        degree: number, u: number): [Vector3, Vector3, Vector3[][], number[]] {
         // The first step is to determine the insertPosition of the current knot, which
         // is u ∈ [u_I, u_{I + 1}) where u is the `insertKnot`. 
         // In addition, we can retrieve the multiplicity `r` of the `insertKnot`.
-        const [I, r] = knotVector.indexOf(insertKnot);
+        const [I, r] = knotVector.indexOf(u);
 
         // `intermediates` will contail the iterations of the de-boor algorithm. At this
         // stage we only want the inital points required at the r-th column of the triangle.
@@ -104,7 +178,7 @@ export class SplineLogic {
                 // I - n + k + j, I + 1
                 const uMin = knotVector.at(I - degree + k + j);
                 const uMax = knotVector.at(I + 1 + j);
-                const alpha = (insertKnot - uMin) / (uMax - uMin);
+                const alpha = (u - uMin) / (uMax - uMin);
 
                 interm[k].push(lerp(interm[k - 1][j], interm[k - 1][j + 1], alpha));
 
@@ -123,7 +197,7 @@ export class SplineLogic {
         // @NICK remove to use yours
         const coefficients: number[] = [];
         controlPoints.forEach((_, idx) => {
-            coefficients.push(this.N(knotVector, degree + 1, idx, insertKnot));
+            coefficients.push(this.N(knotVector, degree + 1, idx, u));
         });
 
         // // @NICK
