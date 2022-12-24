@@ -6,7 +6,7 @@ import { Controller } from "./controller";
 import { SplineLogic } from "../logic/splinesLogic";
 import { Basis } from "../components/basis";
 import { KnotVector } from "../logic/knotVector";
-import { transpose } from "../core/utils";
+import { PolynomialBasisLogic } from "../logic/polynomialBasisLogic";
 
 export class BSplineCurveController extends Controller {
 
@@ -68,11 +68,18 @@ export class BSplineCurveController extends Controller {
         if (this.needsUpdate) {
             this.points().max = this._knots.controlPolygon(this.degree);
             let controlPoints = this.points().children.map(p => p.position.clone());
-            const [points, tangent, basis] = SplineLogic.generateCurve(this._knots, controlPoints, this.degree, this.object().resolution)
 
+            // TODO: make separate from curve
+            const basis = PolynomialBasisLogic.generateSplineBasis(this.degree,
+                this.object().resolution, this._knots, controlPoints.length);
+            this._basis.set(basis);
+
+            const [points, tangent, intermediates] = SplineLogic.generateCurve(this._knots, 
+                controlPoints, this.degree, this.object().resolution, basis);
             this.object().set(points, controlPoints);
-            this.position().set(points, tangent, []);            
-            this._basis.set(transpose(basis));
+            this.position().set(points, tangent, intermediates);
+
+
 
             this.needsUpdate = false;
         }

@@ -23,7 +23,7 @@ describe("SplineLogic", () => {
             controlPoints.push(new Vector3(x, 0, 0));
         });
         const knotVector = new KnotVector([0, 0, 0, 1, 1, 1]);
-        const [pointA] = SplineLogic.generateCurve(knotVector, controlPoints, 3, 100);
+        const [pointA] = SplineLogic.generateCurve(knotVector, controlPoints, 3, 100, []);
         const [pointB] = BezierCurveLogic.generateCurve(controlPoints, 100);
 
         pointA.forEach((a, idx) => {
@@ -31,24 +31,6 @@ describe("SplineLogic", () => {
             expect(a.x).toBeCloseTo(b.x);
             expect(a.y).toBeCloseTo(b.y);
             expect(a.z).toBeCloseTo(b.z);
-        });
-    });
-
-    test("alphaValuesSumToOne", () => {
-        const controlPoints: Vector3[] = [];
-        [0, 4, 8, 4, 8, 0, 8].forEach(x => {
-            controlPoints.push(new Vector3(x, 0, 0));
-        });
-        const knotVector = new KnotVector([0, 0.25, 0.25, 0.5, 0.6, 0.6, 0.8, 0.9, 1]);
-
-        const [_a, _b, bases] = SplineLogic.generateCurve(knotVector, controlPoints, 3, 100);
-
-        bases.forEach(value => {
-            let sum = 0;
-            value.forEach(alpha => {
-                sum += alpha;
-            });
-            expect(sum).toBeCloseTo(1);
         });
     });
 
