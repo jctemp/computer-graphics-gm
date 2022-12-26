@@ -8,16 +8,16 @@ export class SplineLogic {
             let curve, tangents, basisFunctions;
             if (linearInterpolate) {
                 // currently the reference for linear interpolation
-                [curve, tangents, basisFunctions] = LinearInterpolation.generateReference(knotVector, controlPoints, degree, resolution);
+                [curve, tangents, basisFunctions] = LinearInterpolation.generateCurve(knotVector, controlPoints, degree, resolution);
             } else {
-                [curve, tangents, basisFunctions] = CoxDeBoor.generateExperiment(knotVector, controlPoints, degree, resolution);
+                [curve, tangents, basisFunctions] = CoxDeBoor.generateCurve(knotVector, controlPoints, degree, resolution);
             }
             return [curve, tangents, basisFunctions];
     }
 }
 
 export class CoxDeBoor {
-    public static generateExperiment(knots: KnotVector, controlPoints: Vector3[],
+    public static generateCurve(knots: KnotVector, controlPoints: Vector3[],
         degree: number, resolution: number): [Vector3[], Vector3[], number[][]] {
 
         // 1. calculate the curve points
@@ -106,7 +106,7 @@ export class LinearInterpolation {
      * @param resolution sampling count for the curve.
      * @returns a tuple in the from of `[points, intermediates]`
      */
-    public static generateReference(knotVector: KnotVector, controlPoints: Vector3[],
+    public static generateCurve(knotVector: KnotVector, controlPoints: Vector3[],
         degree: number, resolution: number): [Vector3[], Vector3[], number[][]] {
 
         // 1. calculate the curve points
@@ -229,6 +229,5 @@ export class LinearInterpolation {
 
         // return all calculated values.
         return [point, tangent, interm, coefficientList];
-
     }
 }
