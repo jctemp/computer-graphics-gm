@@ -40,9 +40,9 @@ function pascalRow(n: number): number[] {
 /**
  * transpose a given 2d number vector
  */
-function transpose(matrix: number[][]): number[][] {
+function transpose(matrix: any[][]): any[][] {
     if (matrix.length === 0) return []
-    const transposed: number[][] = [];
+    const transposed: any[][] = [];
     for (let idx = 0; idx < matrix[0].length; idx++) {
         transposed[idx] = [];
         for (let jdx = 0; jdx < matrix.length; jdx++) {
