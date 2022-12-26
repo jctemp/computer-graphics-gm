@@ -119,11 +119,11 @@ export class LinearInterpolation {
         const step = roundN((rightBound - leftBound) / resolution);
 
         for (let u = leftBound; u < rightBound; u += step) {
-            const [_point, _tangent, _intermediates, _coefficients] = this.evaluatePosition(knotVector, controlPoints, degree, u);
-            curve.push(_point);
-            tangents.push(_tangent);
-            basisFunctions.push(_coefficients);
-            intermediates.push(_intermediates);
+            const position = this.evaluatePosition(knotVector, controlPoints, degree, u);
+            curve.push(position[0]);
+            tangents.push(position[1]);
+            intermediates.push(position[2]);
+            basisFunctions.push(position[3]);
         }
 
         return [curve, tangents, basisFunctions];
@@ -153,8 +153,7 @@ export class LinearInterpolation {
             interm[0].push(controlPoints[i].clone());
         }
 
-        // store the alpha values for later evaluation
-
+        // store the alpha values for later evaluation in an array of row and index like the intermediates.
         const alphas: number[][] = [];
 
         // The first index is the iteration and the second index can be seen as the position
@@ -174,23 +173,36 @@ export class LinearInterpolation {
         //
         // We start at 1 because we already covered the 0-th iteration by filling the `interm`
         // vector with the initial values.
-        //
         for (let k = 1; k <= degree - r; k++) {
             interm.push([]);
             alphas.push([]);
             for (let j = 0; j <= degree - r - k; j++) {
+                // calculate alpha by finding out the ratio between u and the knots.
                 const uMin = knotVector.at(I - degree + k + j);
                 const uMax = knotVector.at(I + 1 + j);
                 const alpha = (u - uMin) / (uMax - uMin);
 
+                // save alpha AND 1 - alpha to simplify later indexing and calculation.
                 alphas[k - 1].push(1 - alpha);
                 alphas[k - 1].push(alpha);
 
+                // the intermediate point is the result of lerping with the previous intermediates
+                // and the current alpha. this is essentially the addition of one point multiplied
+                // by 1 - alpha and the second point multiplied by alpha.
+                //      PointC = (1 - alpha) * PointA + alpha * PointB
                 interm[k].push(lerp(interm[k - 1][j], interm[k - 1][j + 1], alpha));
             }
         }
 
-        // calculate base functions
+        // calculate base functions with the already saved alpha values
+        // what happens here is kind of hard to imagine without graphical support but in general:
+        //      every alpha value has a value of 1 - alpha -> that is why in alphas idx * 2
+        //      for each row of the intermediate points in reverse order 
+        //          the influence of the current point is calculated back to the original control points
+        //      each point is dependent on two paths' which it influences -> that is why it is value += ...
+        // this does indeed work but could probably be directly integrated in the above loop
+        // after that the influence values are filled to the right point in the array over all control point
+        // influences which will almost all be 0 (which is why the array gets filled with zeros to begin with).
         const coefficients = new Array(degree + 1 - r).fill(1).map((_value, idx) => new Array(degree + 1 - r - idx).fill(1));
         for (let row = degree - r - 1; row >= 0; row--) {
             coefficients[row].forEach((_value, idx) => {
@@ -203,16 +215,19 @@ export class LinearInterpolation {
         const coefficientList = new Array(controlPoints.length).fill(0);
         for (let idx = 0; idx < degree + 1 - r; idx++) coefficientList[leftBound + idx] = coefficients[0][idx];
 
-        // point on the curve
+        // split the point on the curve from the intermediates. this will throw an index error if it does not exist for
+        // some reason -> TODO the undefined check doesn't work because "jest" did not accept the Array .at() method as
+        // existant for some reason.
         const point = interm.pop()![0];
         if (point === undefined) throw new Error("Point does not exists.");
 
-        // calculate tangent
+        // calculate tangent value. note that the last iteration is checked for existence in case r = degree.
         const iteration = interm.pop();
         const tangent = (iteration === undefined) ? new Vector3() :
             iteration[1].clone().sub(iteration[0]).multiplyScalar(degree);
         if (iteration !== undefined) interm.push(iteration);
 
+        // return all calculated values.
         return [point, tangent, interm, coefficientList];
 
     }
