@@ -75,6 +75,29 @@ describe("SplineLogic", () => {
                 expect(knot).toBeCloseTo(LinearInterpolation.evaluatePosition(knotVector, controlPoints, degree, lower)[0].x);
         });
     });
+
+    test("compareMehods", () => {
+        const controlPoints: Vector3[] = [];
+        [0, 4, 8, 4, 8, 0, 8].forEach(x => {
+            controlPoints.push(new Vector3(x, 0, 0));
+        });
+        const knotVector = new KnotVector([0, 0.25, 0.25, 0.5, 0.6, 0.6, 0.8, 0.9, 1]);
+
+        const [pointA, _tangentsA, alphasA] = SplineLogic.generateCurve(knotVector, controlPoints, 3, 100, true);
+        const [pointB, _tangentsB, alphasB] = SplineLogic.generateCurve(knotVector, controlPoints, 3, 100, false);
+
+        pointA.forEach((a, idx) => {
+            const b = pointB[idx];
+            expect(a.x).toBeCloseTo(b.x);
+            expect(a.y).toBeCloseTo(b.y);
+            expect(a.z).toBeCloseTo(b.z);
+        });
+        alphasA.forEach((value,jdx) => {
+            value.forEach((a, idx) => {
+                expect(a).toBeCloseTo(alphasB[jdx][idx]);
+            });
+        });
+    });
 });
 
 describe("Utils", () => {

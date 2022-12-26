@@ -2,13 +2,9 @@ import { Vector3 } from "three";
 import { lerp, roundN } from "../core/utils";
 import { KnotVector } from "./knotVector";
 
-// @NICK
-import { pascalRow } from "../core/utils";
-
-
 export class SplineLogic {
     public static generateCurve(knotVector: KnotVector, controlPoints: Vector3[],
-        degree: number, resolution: number, linearInterpolate: boolean = false): [Vector3[], Vector3[], number[][]] {
+        degree: number, resolution: number, linearInterpolate: boolean = true): [Vector3[], Vector3[], number[][]] {
             let curve, tangents, basisFunctions;
             if (linearInterpolate) {
                 // currently the reference for linear interpolation
@@ -20,7 +16,6 @@ export class SplineLogic {
     }
 }
 
-    
 export class CoxDeBoor {
     public static generateExperiment(knots: KnotVector, controlPoints: Vector3[],
         degree: number, resolution: number): [Vector3[], Vector3[], number[][]] {
@@ -102,14 +97,6 @@ export class CoxDeBoor {
     }
 }
 
-
-
-
-
-
-
-
-
 export class LinearInterpolation {
     /**
      * The `generateCurve` function computes `1 / resolution` points on a the bspline.
@@ -166,19 +153,9 @@ export class LinearInterpolation {
             interm[0].push(controlPoints[i].clone());
         }
 
-        // @NICK
-        // these pascal row of degree -1 is effectively used to split the alphas and (1 - alphas) from each other
-        // when calculating which paths factor belong to which d
-        let pascalIdx = degree - r - 1;
-        let pascal = pascalRow(pascalIdx);
-        const alphas: number[] = [];
-        // fill intermediate alpha values with 1 as the neutral element for multiplikation
-        pascal.forEach(value => {
-            for (let i = 0; i < value; i++) {
-                alphas.push(1);
-                alphas.push(1);
-            }
-        });
+        // store the alpha values for later evaluation
+
+        const alphas: number[][] = [];
 
         // The first index is the iteration and the second index can be seen as the position
         // of the value inside the array. With a multiplicity greater than zero, we can skip
@@ -198,68 +175,45 @@ export class LinearInterpolation {
         // We start at 1 because we already covered the 0-th iteration by filling the `interm`
         // vector with the initial values.
         //
-        for (let k = 1, p = degree - r - 1; k <= degree - r; k++, p--) {
+        for (let k = 1; k <= degree - r; k++) {
             interm.push([]);
-
-            // @NICK
-            let alphaIdx = 0;
-            pascal = pascalRow(pascalIdx--);
+            alphas.push([]);
             for (let j = 0; j <= degree - r - k; j++) {
-                // I - n + k + j, I + 1
                 const uMin = knotVector.at(I - degree + k + j);
                 const uMax = knotVector.at(I + 1 + j);
                 const alpha = (u - uMin) / (uMax - uMin);
 
-                interm[k].push(lerp(interm[k - 1][j], interm[k - 1][j + 1], alpha));
+                alphas[k - 1].push(1 - alpha);
+                alphas[k - 1].push(alpha);
 
-                // @NICK
-                for (let idx = 0; idx < pascal[j]; idx++) {
-                    for (let jdx = 0; jdx < 2 ** (k - 1); jdx++) {
-                        alphas[alphaIdx++] *= (1 - alpha);
-                    }
-                    for (let jdx = 0; jdx < 2 ** (k - 1); jdx++) {
-                        alphas[alphaIdx++] *= alpha;
-                    }
-                }
+                interm[k].push(lerp(interm[k - 1][j], interm[k - 1][j + 1], alpha));
             }
         }
 
-        // @NICK
-        //                                        1                                         n=0, k=n-1
-        //                   !a0                                     a0                     n=1, k=n-1 [a0]
-        //         !b0                  b0                 !b1                  b1          n=2, k=n-1 [b0, b1]
-        //    !c0       c0        !c1        c1       !c1       c1        !c2       c2      n=3, k=n-1 [c0, c1, c2]
-        // !d0   d0  !d1   d1  !d1   d1  !d1   d1  !d2   d2  !d2   d2  !d2   d2  !d3   d3   n=4, k=n-1 [d0, d1, d2, d3]
-        const summedAlphas: number[] = [];
-        if (alphas.length == 0) {
-            // in case r = degree all previous loops are degenerated and a 1 needs to be placed manually
-            summedAlphas.push(1);
-        } else {
-            // sum up all conditional paths for a certain d
-            let alphaIndex = 0;
-            pascalRow(degree - r).forEach(value => {
-                let sum = 0;
-                for (let idx = 0; idx < value; idx++) {
-                    sum += alphas[alphaIndex++];
-                }
-                summedAlphas.push(sum);
+        // calculate base functions
+        const coefficients = new Array(degree + 1 - r).fill(1).map((_value, idx) => new Array(degree + 1 - r - idx).fill(1));
+        for (let row = degree - r - 1; row >= 0; row--) {
+            coefficients[row].forEach((_value, idx) => {
+                let value = 0;
+                if (idx != 0) value = alphas[row][(idx * 2) - 1] * coefficients[row + 1][idx - 1];
+                if (idx != coefficients[row].length - 1) value += alphas[row][idx * 2] * coefficients[row + 1][idx];
+                coefficients[row][idx] = value;
             });
         }
+        const coefficientList = new Array(controlPoints.length).fill(0);
+        for (let idx = 0; idx < degree + 1 - r; idx++) coefficientList[leftBound + idx] = coefficients[0][idx];
 
-        const coefficients = new Array(controlPoints.length).fill(0);
-        for (let i = leftBound; i <= I + 1 - r; i++) {
-            coefficients[i] = summedAlphas[i - leftBound];
-        }
-
+        // point on the curve
         const point = interm.pop()![0];
         if (point === undefined) throw new Error("Point does not exists.");
 
+        // calculate tangent
         const iteration = interm.pop();
         const tangent = (iteration === undefined) ? new Vector3() :
             iteration[1].clone().sub(iteration[0]).multiplyScalar(degree);
         if (iteration !== undefined) interm.push(iteration);
 
-        return [point, tangent, interm, coefficients];
+        return [point, tangent, interm, coefficientList];
 
     }
 }
