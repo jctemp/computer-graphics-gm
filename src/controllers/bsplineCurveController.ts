@@ -68,7 +68,7 @@ export class BSplineCurveController extends Controller {
         if (this.needsUpdate) {
             this.points().max = this._knots.controlPolygon(this.degree);
             let controlPoints = this.points().children.map(p => p.position.clone());
-            const [points, tangent, basis] = SplineLogic.generateCurve(this._knots, controlPoints, this.degree, this.object().resolution)
+            const [points, tangent, _interm, basis] = SplineLogic.generateCurve(this._knots, controlPoints, this.degree, this.object().resolution)
 
             this.object().set(points, controlPoints);
             this.position().set(points, tangent, []);            

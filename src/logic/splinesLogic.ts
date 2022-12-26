@@ -4,21 +4,22 @@ import { KnotVector } from "./knotVector";
 
 export class SplineLogic {
     public static generateCurve(knotVector: KnotVector, controlPoints: Vector3[],
-        degree: number, resolution: number, linearInterpolate: boolean = false): [Vector3[], Vector3[], number[][]] {
-            let curve, tangents, basisFunctions;
+        degree: number, resolution: number, linearInterpolate: boolean = false): [Vector3[], Vector3[], Vector3[][][], number[][]] {
+            let curve, tangents, intermediates, basisFunctions;
             if (linearInterpolate) {
-                // currently the reference for linear interpolation
-                [curve, tangents, basisFunctions] = LinearInterpolation.generateCurve(knotVector, controlPoints, degree, resolution);
+                // calculate the curve using de boor's linear interpolation algorithm
+                [curve, tangents, intermediates, basisFunctions] = LinearInterpolation.generateCurve(knotVector, controlPoints, degree, resolution);
             } else {
-                [curve, tangents, basisFunctions] = CoxDeBoor.generateCurve(knotVector, controlPoints, degree, resolution);
+                // first calculate bases using cox de boor and using that the curve
+                [curve, tangents, intermediates, basisFunctions] = CoxDeBoor.generateCurve(knotVector, controlPoints, degree, resolution);
             }
-            return [curve, tangents, basisFunctions];
+            return [curve, tangents, intermediates, basisFunctions];
     }
 }
 
 export class CoxDeBoor {
     public static generateCurve(knots: KnotVector, controlPoints: Vector3[],
-        degree: number, resolution: number): [Vector3[], Vector3[], number[][]] {
+        degree: number, resolution: number): [Vector3[], Vector3[], Vector3[][][], number[][]] {
         // define all output attributes
         const curve: Vector3[] = [];
         let tangents: Vector3[] = [];
@@ -34,7 +35,8 @@ export class CoxDeBoor {
             us.push(u);
         }
 
-        // create table for dynamic programming
+        // create table for dynamic programming. if lets say one changes it to a map(number->number)[][] one
+        // could get rid of the neccassity for udx inside the basis calculation
         const table = new Array(degree + 1).fill(0).map(() => 
             new Array(controlPoints.length + degree).fill(0).map(() => 
             new Array(us.length).fill(undefined)));
@@ -67,11 +69,12 @@ export class CoxDeBoor {
         // TODO calculate these ourselves
         const result = LinearInterpolation.generateCurve(knots, controlPoints, degree, resolution);
         tangents = result[1];
-        // this.derive(knots, degree, idx, jdx, table);
-
+        // for each u value to insert
+        this.derive(knots, controlPoints, degree, us, table)
+        
 
         // return all calculated values
-        return [curve, tangents, basisFunctions];
+        return [curve, tangents, intermediates, basisFunctions];
     }
 
     /**
@@ -93,44 +96,56 @@ export class CoxDeBoor {
         // the start up knot sequence calls this about 550 times so it's worth
         if (table[n][j][udx] !== undefined) return table[n][j][udx];
 
+        // pre calculate the values which are guaranteed needed
+        const knotValue_jminus1 = knots.at(j - 1);
+        const knotValue_j = knots.at(j);
+
         // in case of degree 0 stop the recursion and look up, whether u lies inside the segment
-        if (n === 0) {
-            let value = 0;
-            if (u >= knots.at(j-1) && u < knots.at(j)) {
-                table[n][j][udx] = 1;
-                value = 1;
-            } 
-            return value;
-        }
+        if (n === 0) return table[n][j][udx] = (u >= knotValue_jminus1 && u < knotValue_j) ? 1 : 0;
+
+        // pre calculate remaining knots of certain indices
+        const knotValue_jplusn = knots.at(j + n);
+        const knotValue_jplusnminus1 = knots.at(j + n - 1);
 
         // left side basis
-        let left = (u - knots.at(j-1)) / (knots.at(j+n-1) - knots.at(j-1));
-        if(!isFinite(left)) left = 0;
-        let base1 = left * this.basis(knots, n - 1, j, u, udx, table);
+        let left = (u - knotValue_jminus1) / (knotValue_jplusnminus1 - knotValue_jminus1);
+        if (!isFinite(left)) left = 0;
+        const base1 = left * this.basis(knots, n - 1, j, u, udx, table);
 
         // right side basis
-        let right = (knots.at(j+n)-u) / (knots.at(j+n)-knots.at(j));
-        if(!isFinite(right)) right = 0;
-        let base2 = right * this.basis(knots, n - 1, j + 1, u, udx, table);
+        let right = (knotValue_jplusn - u) / (knotValue_jplusn - knotValue_j);
+        if (!isFinite(right)) right = 0;
+        const base2 = right * this.basis(knots, n - 1, j + 1, u, udx, table);
 
-        // write the new value into the lookup table
-        let sum = base1 + base2;
-        table[n][j][udx] = sum;
-        return sum;
+        // write the new value into the lookup table and return it
+        return table[n][j][udx] = base1 + base2;
     }
 
-    // TODO
-    public static derive(knots: KnotVector, n: number, j: number, udx: number, table: number[][][]): number {
-        const left = n / (knots.at(j+n-1)-knots.at(j-1));
-        const right = n / (knots.at(j+n)-knots.at(j));
+    // TODO         VL8 page 59
+    public static derive(knots: KnotVector, controlPoints: Vector3[], n: number, us: number[], table: number[][][]): Vector3[] {
+        const derivatives: Vector3[] = [];
 
-        let base1 = left * table[n-1][j][udx];
-        let base2 = right * table[n-1][j+1][udx];
+        for (let udx = 0; udx < us.length; udx++) {
+            let interm: Vector3 = new Vector3(0, 0, 0);
+            // for each control point
+            for (let j = 0; j < controlPoints.length - 1; j++) {
+                // left side
+                const left = n / (knots.at(j + n - 1) - knots.at(j - 1));
+                let base1 = left * table[n - 1][j][udx];
+                if (!isFinite(base1)) base1 = 0;
+        
+                // right side
+                const right = n / (knots.at(j + n) - knots.at(j));
+                let base2 = right * table[n - 1][j + 1][udx];
+                if (!isFinite(base2)) base2 = 0;
 
-        if (!isFinite(base1)) base1 = 0;
-        if (!isFinite(base2)) base2 = 0;
-
-        return base1 - base2;
+                // divide them from each other
+                const factor = base1 - base2;
+            }
+            derivatives.push(interm);
+        }
+        
+        return derivatives;
     }
 }
 
@@ -144,7 +159,7 @@ export class LinearInterpolation {
      * @returns a tuple in the from of `[points, intermediates]`
      */
     public static generateCurve(knotVector: KnotVector, controlPoints: Vector3[],
-        degree: number, resolution: number): [Vector3[], Vector3[], number[][]] {
+        degree: number, resolution: number): [Vector3[], Vector3[], Vector3[][][], number[][]] {
 
         // 1. calculate the curve points
         const curve: Vector3[] = [];
@@ -163,7 +178,7 @@ export class LinearInterpolation {
             basisFunctions.push(position[3]);
         }
 
-        return [curve, tangents, basisFunctions];
+        return [curve, tangents, intermediates, basisFunctions];
     }
 
     /**

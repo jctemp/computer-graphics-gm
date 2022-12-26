@@ -41,7 +41,7 @@ describe("SplineLogic", () => {
         });
         const knotVector = new KnotVector([0, 0.25, 0.25, 0.5, 0.6, 0.6, 0.8, 0.9, 1]);
 
-        const [_a, _b, bases] = SplineLogic.generateCurve(knotVector, controlPoints, 3, 100);
+        const [_a, _b, _c, bases] = SplineLogic.generateCurve(knotVector, controlPoints, 3, 100);
 
         bases.forEach(value => {
             let sum = 0;
@@ -83,8 +83,8 @@ describe("SplineLogic", () => {
         });
         const knotVector = new KnotVector([0, 0.25, 0.25, 0.5, 0.6, 0.6, 0.8, 0.9, 1]);
 
-        const [pointA, tangentsA, alphasA] = SplineLogic.generateCurve(knotVector, controlPoints, 3, 100, true);
-        const [pointB, tangentsB, alphasB] = SplineLogic.generateCurve(knotVector, controlPoints, 3, 100, false);
+        const [pointA, tangentsA, _intermA, alphasA] = SplineLogic.generateCurve(knotVector, controlPoints, 3, 100, true);
+        const [pointB, tangentsB, _intermB, alphasB] = SplineLogic.generateCurve(knotVector, controlPoints, 3, 100, false);
 
         pointA.forEach((a, idx) => {
             const b = pointB[idx];
