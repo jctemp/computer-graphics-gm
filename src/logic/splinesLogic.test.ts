@@ -76,7 +76,7 @@ describe("SplineLogic", () => {
         });
     });
 
-    test("compareMehods", () => {
+    test("compareMethods", () => {
         const controlPoints: Vector3[] = [];
         [0, 4, 8, 4, 8, 0, 8].forEach(x => {
             controlPoints.push(new Vector3(x, 0, 0));
@@ -119,3 +119,29 @@ describe("Utils", () => {
         });
     });
 });
+
+// since this takes a lot of time i commented it out. my results were
+//      Linear Interpolation    = 3631 ms
+//      Cox De Boor             = 6675 ms
+/*
+describe("Timer", () => {
+    test("CurveCalculationMethods", () => {
+        const controlPoints: Vector3[] = [];
+        [0, 4, 8, 4, 8, 0, 8].forEach(x => {
+            controlPoints.push(new Vector3(x, 0, 0));
+        });
+        const knotVector = new KnotVector([0, 0.25, 0.25, 0.5, 0.6, 0.6, 0.8, 0.9, 1]);
+        const ITERATIONS = 1000;
+    
+        console.time('LinearInterpolation');
+        for (let i = 0; i < ITERATIONS; i++)
+            SplineLogic.generateCurve(knotVector, controlPoints, 3, 100, true);
+        console.timeEnd('LinearInterpolation');
+    
+        console.time('CoxDeBoor');
+        for (let i = 0; i < ITERATIONS; i++)
+            SplineLogic.generateCurve(knotVector, controlPoints, 3, 100, false);
+        console.timeEnd('CoxDeBoor');
+    });
+});
+*/
