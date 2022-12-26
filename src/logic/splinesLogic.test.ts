@@ -1,7 +1,7 @@
 import { Vector3 } from "three";
 import { lerp } from "../core/utils";
 import { KnotVector } from "./knotVector";
-import { SplineLogic } from "./splinesLogic";
+import { LinearInterpolation, SplineLogic } from "./splinesLogic";
 import { BezierCurveLogic } from "./bezierCurveLogic";
 
 export { }
@@ -13,7 +13,7 @@ describe("SplineLogic", () => {
             controlPoints.push(new Vector3(x, 0, 0));
         });
         const knotVector = new KnotVector([-10, -6, -2, -2, 0, 4, 8, 12, 16, 18]);
-        const [point, _] = SplineLogic.evaluatePosition(knotVector, controlPoints, 2, 6);
+        const [point, _] = LinearInterpolation.evaluatePosition(knotVector, controlPoints, 2, 6);
         expect(point.x).toEqual(0);
     });
 
@@ -64,15 +64,15 @@ describe("SplineLogic", () => {
         const [leftBound, rightBound] = knotVector.support(degree);
 
         [0.25, 0.5, 0.6].forEach(value => {
-            const knot = SplineLogic.evaluatePosition(knotVector, controlPoints, degree, value)[0].x;
+            const knot = LinearInterpolation.evaluatePosition(knotVector, controlPoints, degree, value)[0].x;
 
             const upper = value + epsilon;
             if (upper < rightBound)
-                expect(knot).toBeCloseTo(SplineLogic.evaluatePosition(knotVector, controlPoints, degree, upper)[0].x);
+                expect(knot).toBeCloseTo(LinearInterpolation.evaluatePosition(knotVector, controlPoints, degree, upper)[0].x);
 
             const lower = value - epsilon;
             if (lower >= leftBound)
-                expect(knot).toBeCloseTo(SplineLogic.evaluatePosition(knotVector, controlPoints, degree, lower)[0].x);
+                expect(knot).toBeCloseTo(LinearInterpolation.evaluatePosition(knotVector, controlPoints, degree, lower)[0].x);
         });
     });
 });
