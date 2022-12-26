@@ -66,12 +66,8 @@ export class CoxDeBoor {
             curve.push(point);
         });
 
-        // TODO calculate these ourselves
-        const result = LinearInterpolation.generateCurve(knots, controlPoints, degree, resolution);
-        tangents = result[1];
-        // for each u value to insert
-        this.derive(knots, controlPoints, degree, us, table)
-        
+        // calculate the derivative using the already present base functions
+        tangents = this.derive(knots, controlPoints, degree, us, table);
 
         // return all calculated values
         return [curve, tangents, intermediates, basisFunctions];
@@ -121,28 +117,31 @@ export class CoxDeBoor {
         return table[n][j][udx] = base1 + base2;
     }
 
-    // TODO         VL8 page 59
+    // TODO split the udx thing to the upper function to be consistent with other implementations ?
     public static derive(knots: KnotVector, controlPoints: Vector3[], n: number, us: number[], table: number[][][]): Vector3[] {
         const derivatives: Vector3[] = [];
 
         for (let udx = 0; udx < us.length; udx++) {
+            // initialize vector for basis of summation
             let interm: Vector3 = new Vector3(0, 0, 0);
+
             // for each control point
             for (let j = 0; j < controlPoints.length - 1; j++) {
-                // left side
-                const left = n / (knots.at(j + n - 1) - knots.at(j - 1));
-                let base1 = left * table[n - 1][j][udx];
-                if (!isFinite(base1)) base1 = 0;
-        
-                // right side
-                const right = n / (knots.at(j + n) - knots.at(j));
-                let base2 = right * table[n - 1][j + 1][udx];
-                if (!isFinite(base2)) base2 = 0;
+                // get value from the lower tier bspline curve which was already calculated, because it was used
+                // as a basis for the higher degree bspline curve
+                let N = table[n - 1][j + 1][udx];
+                if (N === undefined) N = 0;
 
-                // divide them from each other
-                const factor = base1 - base2;
+                // calculate the factor at which the sub control point Q affects the derivative
+                const factor = (N * n) / (knots.at(j + n) - knots.at(j));
+
+                // add the current iterations value to the intermediate
+                // TODO this division of control points could be done one time initialy (worth?)
+                interm.add(controlPoints[j + 1].clone().sub(controlPoints[j]).multiplyScalar(factor));
             }
-            derivatives.push(interm);
+
+            // add this derivative to the output array
+            derivatives.push(interm.normalize());
         }
         
         return derivatives;
@@ -275,8 +274,8 @@ export class LinearInterpolation {
 
         // calculate tangent value. note that the last iteration is checked for existence in case r = degree.
         const iteration = interm.pop();
-        const tangent = (iteration === undefined) ? new Vector3() :
-            iteration[1].clone().sub(iteration[0]).multiplyScalar(degree);
+        const tangent = (iteration === undefined) ? new Vector3(0, 0, 0) :
+            iteration[1].clone().sub(iteration[0]).multiplyScalar(degree).normalize();
         if (iteration !== undefined) interm.push(iteration);
 
         // return all calculated values.
