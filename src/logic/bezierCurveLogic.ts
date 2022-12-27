@@ -48,7 +48,7 @@ export class BezierCurveLogic {
             controlPoints = BezierCurveLogic.deCasteljauIteration(controlPoints, t);
             iterations.push([...controlPoints]);
         }
-        const point = iterations.pop()?.at(0);
+        const point = iterations.pop()![0];
         if (point === undefined) throw new Error("Evaluate position: no point calculated.");
 
 

@@ -1,7 +1,7 @@
 import { Vector3 } from "three";
 import { lerp } from "../core/utils";
 import { KnotVector } from "./knotVector";
-import { SplineLogic } from "./splinesLogic";
+import { LinearInterpolation, SplineLogic } from "./splinesLogic";
 import { BezierCurveLogic } from "./bezierCurveLogic";
 
 export { }
@@ -13,7 +13,7 @@ describe("SplineLogic", () => {
             controlPoints.push(new Vector3(x, 0, 0));
         });
         const knotVector = new KnotVector([-10, -6, -2, -2, 0, 4, 8, 12, 16, 18]);
-        const [point, _] = SplineLogic.evaluatePosition(knotVector, controlPoints, 2, 6);
+        const [point, _] = LinearInterpolation.evaluatePosition(knotVector, controlPoints, 2, 6);
         expect(point.x).toEqual(0);
     });
 
@@ -23,7 +23,7 @@ describe("SplineLogic", () => {
             controlPoints.push(new Vector3(x, 0, 0));
         });
         const knotVector = new KnotVector([0, 0, 0, 1, 1, 1]);
-        const [pointA] = SplineLogic.generateCurve(knotVector, controlPoints, 3, 100, []);
+        const [pointA] = SplineLogic.generateCurve(knotVector, controlPoints, 3, 100);
         const [pointB] = BezierCurveLogic.generateCurve(controlPoints, 100);
 
         pointA.forEach((a, idx) => {
@@ -31,6 +31,24 @@ describe("SplineLogic", () => {
             expect(a.x).toBeCloseTo(b.x);
             expect(a.y).toBeCloseTo(b.y);
             expect(a.z).toBeCloseTo(b.z);
+        });
+    });
+
+    test("alphaValuesSumToOne", () => {
+        const controlPoints: Vector3[] = [];
+        [0, 4, 8, 4, 8, 0, 8].forEach(x => {
+            controlPoints.push(new Vector3(x, 0, 0));
+        });
+        const knotVector = new KnotVector([0, 0.25, 0.25, 0.5, 0.6, 0.6, 0.8, 0.9, 1]);
+
+        const [_a, _b, _c, bases] = SplineLogic.generateCurve(knotVector, controlPoints, 3, 100);
+
+        bases.forEach(value => {
+            let sum = 0;
+            value.forEach(alpha => {
+                sum += alpha;
+            });
+            expect(sum).toBeCloseTo(1);
         });
     });
 
@@ -46,15 +64,44 @@ describe("SplineLogic", () => {
         const [leftBound, rightBound] = knotVector.support(degree);
 
         [0.25, 0.5, 0.6].forEach(value => {
-            const knot = SplineLogic.evaluatePosition(knotVector, controlPoints, degree, value)[0].x;
+            const knot = LinearInterpolation.evaluatePosition(knotVector, controlPoints, degree, value)[0].x;
 
             const upper = value + epsilon;
             if (upper < rightBound)
-                expect(knot).toBeCloseTo(SplineLogic.evaluatePosition(knotVector, controlPoints, degree, upper)[0].x);
+                expect(knot).toBeCloseTo(LinearInterpolation.evaluatePosition(knotVector, controlPoints, degree, upper)[0].x);
 
             const lower = value - epsilon;
             if (lower >= leftBound)
-                expect(knot).toBeCloseTo(SplineLogic.evaluatePosition(knotVector, controlPoints, degree, lower)[0].x);
+                expect(knot).toBeCloseTo(LinearInterpolation.evaluatePosition(knotVector, controlPoints, degree, lower)[0].x);
+        });
+    });
+
+    test("compareMethods", () => {
+        const controlPoints: Vector3[] = [];
+        [0, 4, 8, 4, 8, 0, 8].forEach(x => {
+            controlPoints.push(new Vector3(x, 0, 0));
+        });
+        const knotVector = new KnotVector([0, 0.25, 0.25, 0.5, 0.6, 0.6, 0.8, 0.9, 1]);
+
+        const [pointA, tangentsA, _intermA, alphasA] = SplineLogic.generateCurve(knotVector, controlPoints, 3, 100, true);
+        const [pointB, tangentsB, _intermB, alphasB] = SplineLogic.generateCurve(knotVector, controlPoints, 3, 100, false);
+
+        pointA.forEach((a, idx) => {
+            const b = pointB[idx];
+            expect(a.x).toBeCloseTo(b.x);
+            expect(a.y).toBeCloseTo(b.y);
+            expect(a.z).toBeCloseTo(b.z);
+        });
+        tangentsA.forEach((a, idx) => {
+            const b = tangentsB[idx];
+            expect(a.x).toBeCloseTo(b.x);
+            expect(a.y).toBeCloseTo(b.y);
+            expect(a.z).toBeCloseTo(b.z);
+        });
+        alphasA.forEach((value, jdx) => {
+            value.forEach((a, idx) => {
+                expect(a).toBeCloseTo(alphasB[jdx][idx]);
+            });
         });
     });
 });
@@ -72,3 +119,29 @@ describe("Utils", () => {
         });
     });
 });
+
+// since this takes a lot of time i commented it out. my results were
+//      Linear Interpolation    = 3631 ms
+//      Cox De Boor             = 6675 ms
+/*
+describe("Timer", () => {
+    test("CurveCalculationMethods", () => {
+        const controlPoints: Vector3[] = [];
+        [0, 4, 8, 4, 8, 0, 8].forEach(x => {
+            controlPoints.push(new Vector3(x, 0, 0));
+        });
+        const knotVector = new KnotVector([0, 0.25, 0.25, 0.5, 0.6, 0.6, 0.8, 0.9, 1]);
+        const ITERATIONS = 1000;
+    
+        console.time('LinearInterpolation');
+        for (let i = 0; i < ITERATIONS; i++)
+            SplineLogic.generateCurve(knotVector, controlPoints, 3, 100, true);
+        console.timeEnd('LinearInterpolation');
+    
+        console.time('CoxDeBoor');
+        for (let i = 0; i < ITERATIONS; i++)
+            SplineLogic.generateCurve(knotVector, controlPoints, 3, 100, false);
+        console.timeEnd('CoxDeBoor');
+    });
+});
+*/
