@@ -15,8 +15,7 @@ export class Basis extends Group {
      * @param resolution sampling accuracy
      */
     public set(coefficients: number[][]): void {
-        if (coefficients.length == 0) return;
-        
+
         while (this.children.length > 0) {
             const child = this.children.pop();
             child?.removeFromParent();
@@ -28,15 +27,17 @@ export class Basis extends Group {
         this.add(grid);
 
         this.add(this._bar);
+        if (coefficients.length !== 0) {
 
-        const resolution = coefficients[0].length;
-        coefficients.forEach((coeffs, idx) => {
-            const line = new CustomLine();
-            line.color = primaryColor[idx];
-            line.buffer = coeffs.map(
-                (y, x) => new Vector3(x / resolution, y, 0));
-            this.add(line);
-        });
+            const resolution = coefficients[0].length;
+            coefficients.forEach((coeffs, idx) => {
+                const line = new CustomLine();
+                line.color = primaryColor[idx];
+                line.buffer = coeffs.map(
+                    (y, x) => new Vector3(x / resolution, y, 0));
+                this.add(line);
+            });
+        }
 
         this.position.set(-.5, -.5, 0)
         this.update();

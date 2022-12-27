@@ -21,7 +21,7 @@ export class CustomLine extends THREE.Line {
      * buffer.
      */
     public set buffer(points: Array<Vector3>) {
-        if (this.length != points.length) {
+        if (points.length === 0 || this.length != points.length) {
             // dispose buffer if not undefined
             this.geometry.dispose();
 
