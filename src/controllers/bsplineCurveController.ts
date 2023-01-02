@@ -39,6 +39,10 @@ class Weights {
     public change(pos: number, value: number) {
         if (this._weights.at(pos) !== undefined) this._weights[pos] = value;
     }
+    public set length(length: number) {
+        while (this._weights.length > length) this.remove();
+        while (this._weights.length < length) this.append(1);
+    }
 }
 
 export class BSplineCurveController extends Controller {
@@ -106,6 +110,7 @@ export class BSplineCurveController extends Controller {
     override update(): void {
         if (this.needsUpdate) {
             this.points().max = this._knots.controlPolygon(this.degree);
+            this._weights.length = this.points().max;
             let controlPoints = this.points().children.map(p => p.position.clone());
             const [points, tangent, interm, basis] = SplineLogic.generateCurve(this._knots, controlPoints, this._weights.weightArray(), this.degree, this.object().resolution)
 
@@ -131,7 +136,6 @@ export class BSplineCurveController extends Controller {
 
         curve.add(this.object(), "resolution", 16, 1024, 2)
             .name("Resolution").onChange(() => this.changed());
-        // TODO fix number of weights when changing degree
         curve.add(this, "degree", 1, 8, 1)
             .name("Degree").onChange(() => this.changed());
         curve.add(this, "toggleControlPoints")
