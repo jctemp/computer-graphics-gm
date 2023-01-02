@@ -93,6 +93,7 @@ describe("SplineLogic", () => {
             expect(a.z).toBeCloseTo(b.z);
         });
         tangentsA.forEach((a, idx) => {
+            // TODO if fix in cox de boor happens remove normalize
             a.normalize();
             const b = tangentsB[idx].normalize();
             expect(a.x).toBeCloseTo(b.x);

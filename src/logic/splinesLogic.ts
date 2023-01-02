@@ -140,8 +140,10 @@ export class CoxDeBoor {
                 interm.add(controlPoints[j + 1].clone().sub(controlPoints[j]).multiplyScalar(factor));
             }
 
-            // add this derivative to the output array
-            derivatives.push(interm);
+            // // TODO fix length of derivative
+            // // add this derivative to the output array
+            // const [I, _] = knots.support(n);
+            derivatives.push(interm); // multiplyScalar(n).divideScalar(knots.at(I + 1) - knots.at(I))
         }
         
         return derivatives;
@@ -275,7 +277,7 @@ export class LinearInterpolation {
         // calculate tangent value. note that the last iteration is checked for existence in case r = degree.
         const iteration = interm.pop();
         const tangent = (iteration === undefined) ? new Vector3(0, 0, 0) :
-            iteration[1].clone().sub(iteration[0]).multiplyScalar(degree);
+            iteration[1].clone().sub(iteration[0]).multiplyScalar(degree).divideScalar(knotVector.at(I + 1) - knotVector.at(I));
         if (iteration !== undefined) interm.push(iteration);
 
         // return all calculated values.
