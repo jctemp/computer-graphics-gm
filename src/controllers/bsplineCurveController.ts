@@ -107,10 +107,10 @@ export class BSplineCurveController extends Controller {
         if (this.needsUpdate) {
             this.points().max = this._knots.controlPolygon(this.degree);
             let controlPoints = this.points().children.map(p => p.position.clone());
-            const [points, tangent, _interm, basis] = SplineLogic.generateCurve(this._knots, controlPoints, this._weights.weightArray(), this.degree, this.object().resolution)
+            const [points, tangent, interm, basis] = SplineLogic.generateCurve(this._knots, controlPoints, this._weights.weightArray(), this.degree, this.object().resolution)
 
             this.object().set(points, controlPoints);
-            this.position().set(points, tangent, []);            
+            this.position().set(points, tangent, interm);            
             this._basis.set(transpose(basis));
 
             this.needsUpdate = false;
@@ -142,7 +142,7 @@ export class BSplineCurveController extends Controller {
         insertion.add(this, "addKnot").onFinishChange(() => this.changed()).name("Add Knot Value");
         insertion.add(this, "removeKnot").onFinishChange(() => this.changed()).name("Remove Knot Value");
         insertion.add(this, "_u", -100, 100, 1).name("Current Knot Value");
-        
+
         weights.add(this._weights, "weights").listen().name("Weight Values");
         weights.add(this, "changeWeight").onFinishChange(() => this.changed()).name("Change Weight");
         weights.add(this, "_wPos", 0, 100, 1).name("Weight Position");
