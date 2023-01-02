@@ -64,7 +64,7 @@ export class KnotVector {
                 if (multiplicity === degree) return false;
                 this._knots[idx][1] = multiplicity + 1;
                 this.size++;
-                return false;
+                return true;
             }
             if (knot > _knot) { last = false; break; }
         }
@@ -97,7 +97,7 @@ export class KnotVector {
             if (same && !zero) {
                 this._knots[idx][1] = Math.max(multiplicity - 1, 0);
                 this.size--;
-                return false;
+                return true;
             } else if (same && zero) { index = idx; break; }
         }
 
