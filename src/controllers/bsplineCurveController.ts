@@ -120,10 +120,12 @@ export class BSplineCurveController extends Controller {
     override gui(gui: GUI): void {
         const curve = gui.addFolder("BSplines");
         const insertion = gui.addFolder("Knot insertions");
+        const weights = gui.addFolder("NURBS Weights");
         const curvePoint = gui.addFolder("BSpline Position");
 
         curve.open();
         insertion.open();
+        weights.open();
         curvePoint.open();
 
 
@@ -137,13 +139,14 @@ export class BSplineCurveController extends Controller {
             .name("Toggle Control Polygon");
 
         insertion.add(this._knots, "knots").listen().name("Knot Vector");    
-        insertion.add(this._weights, "weights").listen().name("Weight Values");
         insertion.add(this, "addKnot").onFinishChange(() => this.changed()).name("Add Knot Value");
         insertion.add(this, "removeKnot").onFinishChange(() => this.changed()).name("Remove Knot Value");
         insertion.add(this, "_u", -100, 100, 1).name("Current Knot Value");
-        insertion.add(this, "changeWeight").onFinishChange(() => this.changed()).name("Change Weight");
-        insertion.add(this, "_wPos", 0, 100, 1).name("Weight Position");
-        insertion.add(this, "_wVal", 1, 100, 1).name("Weight Value");
+        
+        weights.add(this._weights, "weights").listen().name("Weight Values");
+        weights.add(this, "changeWeight").onFinishChange(() => this.changed()).name("Change Weight");
+        weights.add(this, "_wPos", 0, 100, 1).name("Weight Position");
+        weights.add(this, "_wVal", 1, 100, 1).name("Weight Value");
 
         curvePoint.add(this.position(), "t", 0, 1, .01)
             .name("t (step)");
