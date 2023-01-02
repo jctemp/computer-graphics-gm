@@ -291,12 +291,13 @@ export class LinearInterpolation {
 
         // calculate tangent value. note that the last iteration is checked for existence in case r = degree.
         const iteration = interm.pop();
+        // TODO remake this to ?-operator, but that would require a really long line of code wouldn't it?
         let tangent = new Vector3(0, 0, 0);
         if (iteration !== undefined) {
             // TODO i cant imagine this being right because i believe the j in the second multiplication must be 1 instead of 0
             const topScalar = degree * weights[degree - r - 1][0] * weights[degree - r - 1][0];
             const divideScalar = (knotVector.at(I + 1) - knotVector.at(I)) * Math.pow(weights[degree - r - 1][0], 2);
-            tangent.add(iteration[1].clone().sub(iteration[0]).multiplyScalar(topScalar).divideScalar(divideScalar));
+            tangent.add(iteration[1].clone().sub(iteration[0]).multiplyScalar(topScalar / divideScalar));
         }
         if (iteration !== undefined) interm.push(iteration);
 

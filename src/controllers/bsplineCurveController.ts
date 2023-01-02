@@ -131,6 +131,7 @@ export class BSplineCurveController extends Controller {
 
         curve.add(this.object(), "resolution", 16, 1024, 2)
             .name("Resolution").onChange(() => this.changed());
+        // TODO fix number of weights when changing degree
         curve.add(this, "degree", 1, 8, 1)
             .name("Degree").onChange(() => this.changed());
         curve.add(this, "toggleControlPoints")
