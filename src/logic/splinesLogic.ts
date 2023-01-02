@@ -141,7 +141,7 @@ export class CoxDeBoor {
             }
 
             // add this derivative to the output array
-            derivatives.push(interm.normalize());
+            derivatives.push(interm);
         }
         
         return derivatives;
@@ -275,7 +275,7 @@ export class LinearInterpolation {
         // calculate tangent value. note that the last iteration is checked for existence in case r = degree.
         const iteration = interm.pop();
         const tangent = (iteration === undefined) ? new Vector3(0, 0, 0) :
-            iteration[1].clone().sub(iteration[0]).multiplyScalar(degree).normalize();
+            iteration[1].clone().sub(iteration[0]).multiplyScalar(degree);
         if (iteration !== undefined) interm.push(iteration);
 
         // return all calculated values.

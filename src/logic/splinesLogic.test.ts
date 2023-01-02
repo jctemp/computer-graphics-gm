@@ -93,7 +93,8 @@ describe("SplineLogic", () => {
             expect(a.z).toBeCloseTo(b.z);
         });
         tangentsA.forEach((a, idx) => {
-            const b = tangentsB[idx];
+            a.normalize();
+            const b = tangentsB[idx].normalize();
             expect(a.x).toBeCloseTo(b.x);
             expect(a.y).toBeCloseTo(b.y);
             expect(a.z).toBeCloseTo(b.z);
