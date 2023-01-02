@@ -38,9 +38,7 @@ export abstract class Controller {
         this.canvas.forEach(c => c.draw());
         this.update();
 
-        requestAnimationFrame(() => {
-            this.run();
-        });
+        requestAnimationFrame(() => this.run());
     }
 
     /**
@@ -64,9 +62,7 @@ export abstract class Controller {
     }
     public addCanvas(cv: Canvas, lights: Light[] = []) {
         this.canvas.push(cv);
-        lights.forEach(value => {
-            cv.append(value);
-        });
+        lights.forEach(value => cv.append(value));
     }
     public addObject(type: Object) {
         this._object = type;

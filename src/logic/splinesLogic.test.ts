@@ -13,7 +13,9 @@ describe("SplineLogic", () => {
             controlPoints.push(new Vector3(x, 0, 0));
         });
         const knotVector = new KnotVector([-10, -6, -2, -2, 0, 4, 8, 12, 16, 18]);
-        const [point, _] = LinearInterpolation.evaluatePosition(knotVector, controlPoints, 2, 6);
+        const weights = [1, 1, 1, 1, 1, 1, 1, 1, 1];
+
+        const [point, _] = LinearInterpolation.evaluatePosition(knotVector, controlPoints, weights, 2, 6);
         expect(point.x).toEqual(0);
     });
 
@@ -23,7 +25,9 @@ describe("SplineLogic", () => {
             controlPoints.push(new Vector3(x, 0, 0));
         });
         const knotVector = new KnotVector([0, 0, 0, 1, 1, 1]);
-        const [pointA] = SplineLogic.generateCurve(knotVector, controlPoints, 3, 100);
+        const weights = [1, 1, 1, 1];
+
+        const [pointA] = SplineLogic.generateCurve(knotVector, controlPoints, weights, 3, 100);
         const [pointB] = BezierCurveLogic.generateCurve(controlPoints, 100);
 
         pointA.forEach((a, idx) => {
@@ -40,8 +44,9 @@ describe("SplineLogic", () => {
             controlPoints.push(new Vector3(x, 0, 0));
         });
         const knotVector = new KnotVector([0, 0.25, 0.25, 0.5, 0.6, 0.6, 0.8, 0.9, 1]);
+        const weights = [1, 1, 1, 1, 1, 1, 1];
 
-        const [_a, _b, _c, bases] = SplineLogic.generateCurve(knotVector, controlPoints, 3, 100);
+        const [_a, _b, _c, bases] = SplineLogic.generateCurve(knotVector, controlPoints, weights, 3, 100);
 
         bases.forEach(value => {
             let sum = 0;
@@ -58,21 +63,22 @@ describe("SplineLogic", () => {
             controlPoints.push(new Vector3(x, 0, 0));
         });
         const knotVector = new KnotVector([0, 0.25, 0.25, 0.5, 0.6, 0.6, 0.8, 0.9, 1]);
+        const weights = [1, 1, 1, 1, 1, 1, 1];
 
         const degree = 3;
         const epsilon = 0.000001;
         const [leftBound, rightBound] = knotVector.support(degree);
 
         [0.25, 0.5, 0.6].forEach(value => {
-            const knot = LinearInterpolation.evaluatePosition(knotVector, controlPoints, degree, value)[0].x;
+            const knot = LinearInterpolation.evaluatePosition(knotVector, controlPoints, weights, degree, value)[0].x;
 
             const upper = value + epsilon;
             if (upper < rightBound)
-                expect(knot).toBeCloseTo(LinearInterpolation.evaluatePosition(knotVector, controlPoints, degree, upper)[0].x);
+                expect(knot).toBeCloseTo(LinearInterpolation.evaluatePosition(knotVector, controlPoints, weights, degree, upper)[0].x);
 
             const lower = value - epsilon;
             if (lower >= leftBound)
-                expect(knot).toBeCloseTo(LinearInterpolation.evaluatePosition(knotVector, controlPoints, degree, lower)[0].x);
+                expect(knot).toBeCloseTo(LinearInterpolation.evaluatePosition(knotVector, controlPoints, weights, degree, lower)[0].x);
         });
     });
 
@@ -82,9 +88,10 @@ describe("SplineLogic", () => {
             controlPoints.push(new Vector3(x, 0, 0));
         });
         const knotVector = new KnotVector([0, 0.25, 0.25, 0.5, 0.6, 0.6, 0.8, 0.9, 1]);
+        const weights = [1, 1, 1, 1, 1, 1, 1];
 
-        const [pointA, tangentsA, _intermA, alphasA] = SplineLogic.generateCurve(knotVector, controlPoints, 3, 100, true);
-        const [pointB, tangentsB, _intermB, alphasB] = SplineLogic.generateCurve(knotVector, controlPoints, 3, 100, false);
+        const [pointA, tangentsA, _intermA, alphasA] = SplineLogic.generateCurve(knotVector, controlPoints, weights, 3, 100, true);
+        const [pointB, tangentsB, _intermB, alphasB] = SplineLogic.generateCurve(knotVector, controlPoints, weights, 3, 100, false);
 
         pointA.forEach((a, idx) => {
             const b = pointB[idx];

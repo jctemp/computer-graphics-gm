@@ -16,6 +16,7 @@ export class BSplineCurveController extends Controller {
 
     private _basis: Basis;
     private _knots: KnotVector;
+    private _weights: number[];
     private _degree: number;
     private _u: number;
 
@@ -44,6 +45,7 @@ export class BSplineCurveController extends Controller {
 
         this._knots = new KnotVector([-1, -1, 2, 3, 5, 5, 5, 7, 8, 10, 10]);
         this._degree = 3;
+        this._weights = [1, 1, 1, 1, 1, 1, 1, 1, 1];
 
         // 2. control points
         this.appendControlPoints(new ControlPoints1d(this._knots.controlPolygon(this.degree)));
@@ -68,7 +70,7 @@ export class BSplineCurveController extends Controller {
         if (this.needsUpdate) {
             this.points().max = this._knots.controlPolygon(this.degree);
             let controlPoints = this.points().children.map(p => p.position.clone());
-            const [points, tangent, _interm, basis] = SplineLogic.generateCurve(this._knots, controlPoints, this.degree, this.object().resolution)
+            const [points, tangent, _interm, basis] = SplineLogic.generateCurve(this._knots, controlPoints, this._weights, this.degree, this.object().resolution)
 
             this.object().set(points, controlPoints);
             this.position().set(points, tangent, []);            

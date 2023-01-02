@@ -3,14 +3,15 @@ import { lerp, roundN, transpose } from "../core/utils";
 import { KnotVector } from "./knotVector";
 
 export class SplineLogic {
-    public static generateCurve(knotVector: KnotVector, controlPoints: Vector3[],
-        degree: number, resolution: number, linearInterpolate: boolean = false): [Vector3[], Vector3[], Vector3[][][], number[][]] {
+    public static generateCurve(knotVector: KnotVector, controlPoints: Vector3[], weightValues: number[],
+        degree: number, resolution: number, linearInterpolate: boolean = true): [Vector3[], Vector3[], Vector3[][][], number[][]] {
             let curve, tangents, intermediates, basisFunctions;
             if (linearInterpolate) {
                 // calculate the curve using de boor's linear interpolation algorithm
-                [curve, tangents, intermediates, basisFunctions] = LinearInterpolation.generateCurve(knotVector, controlPoints, degree, resolution);
+                [curve, tangents, intermediates, basisFunctions] = LinearInterpolation.generateCurve(knotVector, controlPoints, weightValues, degree, resolution);
             } else {
                 // first calculate bases using cox de boor and using that the curve
+                // TODO make this a NURBS
                 [curve, tangents, intermediates, basisFunctions] = CoxDeBoor.generateCurve(knotVector, controlPoints, degree, resolution);
             }
             return [curve, tangents, intermediates, basisFunctions];
@@ -159,7 +160,7 @@ export class LinearInterpolation {
      * @param resolution sampling count for the curve.
      * @returns a tuple in the from of `[points, intermediates]`
      */
-    public static generateCurve(knotVector: KnotVector, controlPoints: Vector3[],
+    public static generateCurve(knotVector: KnotVector, controlPoints: Vector3[], weightValues: number[],
         degree: number, resolution: number): [Vector3[], Vector3[], Vector3[][][], number[][]] {
 
         // 1. calculate the curve points
@@ -172,7 +173,7 @@ export class LinearInterpolation {
         const step = roundN((rightBound - leftBound) / resolution);
 
         for (let u = leftBound; u < rightBound; u += step) {
-            const position = this.evaluatePosition(knotVector, controlPoints, degree, u);
+            const position = this.evaluatePosition(knotVector, controlPoints, weightValues, degree, u);
             curve.push(position[0]);
             tangents.push(position[1]);
             intermediates.push(position[2]);
@@ -190,8 +191,8 @@ export class LinearInterpolation {
      * @param u requested position regarding the knot vector
      * @returns a tuple of [point, tangent, interm, bases]
      */
-    public static evaluatePosition(knotVector: KnotVector, controlPoints: Vector3[],
-        degree: number, u: number): [Vector3, Vector3, Vector3[][], number[]] {
+    public static evaluatePosition(knotVector: KnotVector, controlPoints: Vector3[], weightValues: number[],
+        degree: number, u: number): [Vector3, Vector3, Vector3[][], number[]] {      
         // The first step is to determine the insertPosition of the current knot, which
         // is u ∈ [u_I, u_{I + 1}) where u is the `insertKnot`. 
         // In addition, we can retrieve the multiplicity `r` of the `insertKnot`.
@@ -201,9 +202,11 @@ export class LinearInterpolation {
         // stage we only want the inital points required at the r-th column of the triangle.
         // This also solve the fence post problem.
         const interm: Vector3[][] = [[]];
+        const weights: number[][] = [[]]
         const leftBound = I - degree + 1;
         for (let i = leftBound; i <= I + 1 - r; i++) {
             interm[0].push(controlPoints[i].clone());
+            weights[0].push(weightValues[i]);
         }
 
         // store the alpha values for later evaluation in an array of row and index like the intermediates.
@@ -229,21 +232,33 @@ export class LinearInterpolation {
         for (let k = 1; k <= degree - r; k++) {
             interm.push([]);
             alphas.push([]);
+            weights.push([]);
             for (let j = 0; j <= degree - r - k; j++) {
                 // calculate alpha by finding out the ratio between u and the knots.
                 const uMin = knotVector.at(I - degree + k + j);
                 const uMax = knotVector.at(I + 1 + j);
                 const alpha = (u - uMin) / (uMax - uMin);
 
-                // save alpha AND 1 - alpha to simplify later indexing and calculation.
-                alphas[k - 1].push(1 - alpha);
-                alphas[k - 1].push(alpha);
+                // calculate current iteration's weights 
+                const w = (1 - alpha) * weights[k - 1][j] + alpha * weights[k - 1][j + 1];
+                weights[k].push(w);
+
+                // one time calculations
+                const leftWeightFactor = weights[k - 1][j] / w;
+                const rightWeightFactor = weights[k - 1][j + 1] / w;
+
+                // save alpha AND 1 - alpha with respect to their weights to simplify later indexing 
+                // and calculation. This is "neccessary" for getting the base functions.
+                alphas[k - 1].push((1 - alpha) * leftWeightFactor);
+                alphas[k - 1].push(alpha * rightWeightFactor);
 
                 // the intermediate point is the result of lerping with the previous intermediates
                 // and the current alpha. this is essentially the addition of one point multiplied
                 // by 1 - alpha and the second point multiplied by alpha.
                 //      PointC = (1 - alpha) * PointA + alpha * PointB
-                interm[k].push(lerp(interm[k - 1][j], interm[k - 1][j + 1], alpha));
+                const PointA = interm[k - 1][j].clone().multiplyScalar(leftWeightFactor);
+                const PointB = interm[k - 1][j + 1].clone().multiplyScalar(rightWeightFactor);
+                interm[k].push(lerp(PointA, PointB, alpha));
             }
         }
 
@@ -276,8 +291,13 @@ export class LinearInterpolation {
 
         // calculate tangent value. note that the last iteration is checked for existence in case r = degree.
         const iteration = interm.pop();
-        const tangent = (iteration === undefined) ? new Vector3(0, 0, 0) :
-            iteration[1].clone().sub(iteration[0]).multiplyScalar(degree).divideScalar(knotVector.at(I + 1) - knotVector.at(I));
+        let tangent = new Vector3(0, 0, 0);
+        if (iteration !== undefined) {
+            // TODO i cant imagine this being right because i believe the j in the second multiplication must be 1 instead of 0
+            const topScalar = degree * weights[degree - r - 1][0] * weights[degree - r - 1][0];
+            const divideScalar = (knotVector.at(I + 1) - knotVector.at(I)) * Math.pow(weights[degree - r - 1][0], 2);
+            tangent.add(iteration[1].clone().sub(iteration[0]).multiplyScalar(topScalar).divideScalar(divideScalar));
+        }
         if (iteration !== undefined) interm.push(iteration);
 
         // return all calculated values.
