@@ -36,6 +36,9 @@ class Weights {
     public remove() {
         this._weights.pop();
     }
+    public change(pos: number, value: number) {
+        if (this._weights.at(pos) !== undefined) this._weights[pos] = value;
+    }
 }
 
 export class BSplineCurveController extends Controller {
@@ -49,6 +52,8 @@ export class BSplineCurveController extends Controller {
     private _weights: Weights;
     private _degree: number;
     private _u: number;
+    private _wPos: number;
+    private _wVal: number;
 
     public get degree(): number {
         return this._degree;
@@ -68,6 +73,8 @@ export class BSplineCurveController extends Controller {
         super();
 
         this._u = 0;
+        this._wPos = 0;
+        this._wVal = 1;
 
         // 1. create canvas
         this.addCanvas(new Canvas(canvasWidth, canvasHeight));
@@ -134,6 +141,9 @@ export class BSplineCurveController extends Controller {
         insertion.add(this, "addKnot").onFinishChange(() => this.changed()).name("Add Knot Value");
         insertion.add(this, "removeKnot").onFinishChange(() => this.changed()).name("Remove Knot Value");
         insertion.add(this, "_u", -100, 100, 1).name("Current Knot Value");
+        insertion.add(this, "changeWeight").onFinishChange(() => this.changed()).name("Change Weight");
+        insertion.add(this, "_wPos", 0, 100, 1).name("Weight Position");
+        insertion.add(this, "_wVal", 1, 100, 1).name("Weight Value");
 
         curvePoint.add(this.position(), "t", 0, 1, .01)
             .name("t (step)");
@@ -170,5 +180,13 @@ export class BSplineCurveController extends Controller {
     // @ts-ignore
     private removeKnot(): void {
         if (this._knots.removeKnot(this._u, this.degree)) this._weights.remove();
+    }
+
+    /**
+     * Wrapper to make change call on weights object. Only for the UI.
+     */
+    // @ts-ignore
+    private changeWeight() {
+        this._weights.change(this._wPos, this._wVal);
     }
 }
