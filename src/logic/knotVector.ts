@@ -52,8 +52,8 @@ export class KnotVector {
      * @param _knot value of the knot
      * @param degree of the piecewise polynomials
      */
-    public addKnot(_knot: number | undefined, degree: number = 3): void {
-        if (_knot === undefined) return;
+    public addKnot(_knot: number | undefined, degree: number = 3): boolean {
+        if (_knot === undefined) return false;
 
         let index = -1;
         let last = true;
@@ -61,10 +61,10 @@ export class KnotVector {
             const [knot, multiplicity] = this._knots[idx];
             index = idx;
             if (knot === _knot) {
-                if (multiplicity === degree) return;
+                if (multiplicity === degree) return false;
                 this._knots[idx][1] = multiplicity + 1;
                 this.size++;
-                return;
+                return false;
             }
             if (knot > _knot) { last = false; break; }
         }
@@ -77,16 +77,17 @@ export class KnotVector {
         ];
 
         this.size++;
+        return true;
     }
 
     /**
      * Removes a knot from the vector of knots.
      * @param _knot value of the knot
      */
-    public removeKnot(_knot: number | undefined, degree: number = 3): void {
-        if (this.size === 0 || _knot === undefined) return;
+    public removeKnot(_knot: number | undefined, degree: number = 3): boolean {
+        if (this.size === 0 || _knot === undefined) return false;
         const [leftBoundIndex, rightBoundIndex] = this.supportRange(degree);
-        if (rightBoundIndex - leftBoundIndex <= 1) return;
+        if (rightBoundIndex - leftBoundIndex <= 1) return false;
 
         let index = undefined;
         for (let idx = 0; idx < this._knots.length; idx++) {
@@ -96,11 +97,11 @@ export class KnotVector {
             if (same && !zero) {
                 this._knots[idx][1] = Math.max(multiplicity - 1, 0);
                 this.size--;
-                return;
+                return false;
             } else if (same && zero) { index = idx; break; }
         }
 
-        if (index === undefined) return;
+        if (index === undefined) return false;
 
         this._knots = [
             ...this._knots.slice(0, index),
@@ -108,6 +109,7 @@ export class KnotVector {
         ];
 
         this.size--;
+        return true;
     }
 
     /**

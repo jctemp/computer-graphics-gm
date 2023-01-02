@@ -8,6 +8,36 @@ import { Basis } from "../components/basis";
 import { KnotVector } from "../logic/knotVector";
 import { transpose } from "../core/utils";
 
+class Weights {
+    private _weights: number[] = [];
+
+    constructor(weights: number[] = []) {
+        this._weights = weights;
+    }
+
+    public set weights(_: string) {
+        /* 
+        THE GETTER AND SETTER IS THERE FOR THE GUI, WHICH IS MANDATORY.
+        HERE IS NO IMPLEMENTATION AS IT SHOULD NOT BE USED, HENCE NO
+        FUNCTIONALITY.
+        */
+    }
+
+    public get weights(): string {
+        return this._weights.toString().replaceAll(",", " ");
+    }
+
+    public weightArray(): number[] {
+        return this._weights;
+    }
+    public append(value: number) {
+        this._weights.push(value);
+    }
+    public remove() {
+        this._weights.pop();
+    }
+}
+
 export class BSplineCurveController extends Controller {
 
     /// -----------------------------------------------------------------------
@@ -16,7 +46,7 @@ export class BSplineCurveController extends Controller {
 
     private _basis: Basis;
     private _knots: KnotVector;
-    private _weights: number[];
+    private _weights: Weights;
     private _degree: number;
     private _u: number;
 
@@ -45,7 +75,7 @@ export class BSplineCurveController extends Controller {
 
         this._knots = new KnotVector([-1, -1, 2, 3, 5, 5, 5, 7, 8, 10, 10]);
         this._degree = 3;
-        this._weights = [1, 1, 1, 1, 1, 1, 1, 1, 1];
+        this._weights = new Weights([1, 1, 1, 1, 1, 1, 1, 1, 1]);
 
         // 2. control points
         this.appendControlPoints(new ControlPoints1d(this._knots.controlPolygon(this.degree)));
@@ -70,7 +100,7 @@ export class BSplineCurveController extends Controller {
         if (this.needsUpdate) {
             this.points().max = this._knots.controlPolygon(this.degree);
             let controlPoints = this.points().children.map(p => p.position.clone());
-            const [points, tangent, _interm, basis] = SplineLogic.generateCurve(this._knots, controlPoints, this._weights, this.degree, this.object().resolution)
+            const [points, tangent, _interm, basis] = SplineLogic.generateCurve(this._knots, controlPoints, this._weights.weightArray(), this.degree, this.object().resolution)
 
             this.object().set(points, controlPoints);
             this.position().set(points, tangent, []);            
@@ -99,7 +129,8 @@ export class BSplineCurveController extends Controller {
         curve.add(this.object(), "toggleControlPolygon")
             .name("Toggle Control Polygon");
 
-        insertion.add(this._knots, "knots").listen().name("Knot Vector");
+        insertion.add(this._knots, "knots").listen().name("Knot Vector");    
+        insertion.add(this._weights, "weights").listen().name("Weight Values");
         insertion.add(this, "addKnot").onFinishChange(() => this.changed()).name("Add Knot Value");
         insertion.add(this, "removeKnot").onFinishChange(() => this.changed()).name("Remove Knot Value");
         insertion.add(this, "_u", -100, 100, 1).name("Current Knot Value");
@@ -130,7 +161,7 @@ export class BSplineCurveController extends Controller {
      */
     // @ts-ignore
     private addKnot(): void {
-        this._knots.addKnot(this._u, this.degree);
+        if (this._knots.addKnot(this._u, this.degree)) this._weights.append(1);
     }
 
     /**
@@ -138,6 +169,6 @@ export class BSplineCurveController extends Controller {
      */
     // @ts-ignore
     private removeKnot(): void {
-        this._knots.removeKnot(this._u, this.degree);
+        if (this._knots.removeKnot(this._u, this.degree)) this._weights.remove();
     }
 }
