@@ -26,18 +26,6 @@ function binomial(n: number, k: number): number {
 }
 
 /**
- * Calculates the binomial coefficients for a whole line of degree.
- */
-function pascalRow(n: number): number[] {
-    const result = []
-    for (let j = 0; j <= n; j++) {
-        result.push(binomial(n, j));
-    }
-
-    return result;
-}
-
-/**
  * transpose a given 2d number vector
  */
 function transpose(matrix: any[][]): any[][] {
@@ -52,4 +40,4 @@ function transpose(matrix: any[][]): any[][] {
     return transposed;
 }
 
-export { lerp, roundN, binomial, pascalRow, transpose }
+export { lerp, roundN, binomial, transpose }
