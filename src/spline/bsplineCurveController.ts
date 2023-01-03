@@ -1,12 +1,12 @@
 import { GUI } from "dat.gui";
-import { ControlPoints1d } from "../components/controlPoints";
-import { Curve, CurvePosition } from "../components/curve";
-import { Canvas } from "../core/canvas";
-import { Controller } from "./controller";
-import { SplineLogic } from "../logic/splinesLogic";
-import { Basis } from "../components/basis";
-import { KnotVector } from "../logic/knotVector";
-import { transpose } from "../core/utils";
+import { ControlPoints1d } from "../base/controlPoints";
+import { Curve, CurvePosition } from "../base/curve";
+import { Canvas } from "../base/canvas";
+import { Controller } from "../base/controller";
+import { SplineLogic } from "./splinesLogic";
+import { Basis } from "../base/basis";
+import { KnotVector } from "./knotVector";
+import { transpose } from "../base/utils";
 
 class Weights {
     private _weights: number[] = [];

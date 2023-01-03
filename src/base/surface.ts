@@ -1,7 +1,7 @@
 import { Vector3 } from "three";
-import { CustomLine } from "../core/customLine";
-import { CustomSurface } from "../core/customSurface";
-import { CustomPoint, Shape } from "../core/customPoint";
+import { CustomLine } from "./customLine";
+import { CustomSurface } from "./customSurface";
+import { CustomPoint, Shape } from "./customPoint";
 import { Object, ObjectPosition } from "./object";
 
 export class Surface extends Object {

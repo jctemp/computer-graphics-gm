@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { Vector3 } from "three";
-import { lerp, roundN } from "../core/utils";
+import { lerp, roundN } from "../base/utils";
 
 export class BezierCurveLogic {
 

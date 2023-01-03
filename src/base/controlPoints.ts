@@ -1,8 +1,8 @@
 import { Group, Vector3 } from "three";
 import { randFloat } from "three/src/math/MathUtils";
-import { Signal } from "../core/connector";
-import { CustomPoint, Shape } from "../core/customPoint";
-import { primaryColor } from "../core/color";
+import { Signal } from "./connector";
+import { CustomPoint, Shape } from "./customPoint";
+import { primaryColor } from "./color";
 
 /**
  * abstract super class for any kind of control point objects

@@ -1,7 +1,7 @@
 import { Vector3 } from "three";
-import { CustomLine } from "../core/customLine";
-import { Signal, Slot } from "../core/connector";
-import { CustomPoint, Shape } from "../core/customPoint";
+import { CustomLine } from "./customLine";
+import { Signal, Slot } from "./connector";
+import { CustomPoint, Shape } from "./customPoint";
 import { Object, ObjectPosition } from "./object";
 
 /**

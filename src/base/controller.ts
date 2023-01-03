@@ -1,8 +1,8 @@
-import { Canvas } from "../core/canvas";
-import { Slot, connect } from "../core/connector";
-import { ControlPoints } from "../components/controlPoints";
+import { Canvas } from "./canvas";
+import { Slot, connect } from "./connector";
+import { ControlPoints } from "../base/controlPoints";
 import { Light } from "three";
-import { Object, ObjectPosition } from "../components/object";
+import { Object, ObjectPosition } from "../base/object";
 
 /**
  * abstract super class for controller of specific curve or surface types

@@ -1,12 +1,12 @@
 import { Vector3 } from "three";
-import { Canvas } from "../core/canvas";
-import { Controller } from "./controller";
-import { connect } from "../core/connector";
-import { BezierCurveLogic } from "../logic/bezierCurveLogic";
-import { Curve, CurvePosition } from "../components/curve";
-import { ControlPoints1d } from "../components/controlPoints";
-import { Basis } from "../components/basis";
-import { PolynomialBasisLogic } from "../logic/polynomialBasisLogic";
+import { Canvas } from "../base/canvas";
+import { Controller } from "../base/controller";
+import { connect } from "../base/connector";
+import { BezierCurveLogic } from "../bezier/bezierCurveLogic";
+import { Curve, CurvePosition } from "../base/curve";
+import { ControlPoints1d } from "../base/controlPoints";
+import { Basis } from "../base/basis";
+import { PolynomialBasisLogic } from "./polynomialBasisLogic";
 
 export class BezierCurveController extends Controller {
 

@@ -1,5 +1,5 @@
-import { binomial, roundN } from "../core/utils";
-import { KnotVector } from "./knotVector";
+import { binomial, roundN } from "../base/utils";
+import { KnotVector } from "../spline/knotVector";
 
 export class PolynomialBasisLogic {
     /**

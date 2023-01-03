@@ -1,5 +1,5 @@
 import { Vector3 } from "three";
-import { lerp, roundN, transpose } from "../core/utils";
+import { lerp, roundN, transpose } from "../base/utils";
 import { KnotVector } from "./knotVector";
 
 export class SplineLogic {

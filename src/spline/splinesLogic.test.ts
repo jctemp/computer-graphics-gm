@@ -1,8 +1,8 @@
 import { Vector3 } from "three";
-import { lerp } from "../core/utils";
+import { lerp } from "../base/utils";
 import { KnotVector } from "./knotVector";
 import { LinearInterpolation, SplineLogic } from "./splinesLogic";
-import { BezierCurveLogic } from "./bezierCurveLogic";
+import { BezierCurveLogic } from "../bezier/bezierCurveLogic";
 
 export { }
 

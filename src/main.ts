@@ -1,10 +1,10 @@
 import './style.css'
 
 import * as dat from 'dat.gui';
-import { Controller } from './controllers/controller';
-import { BezierCurveController } from './controllers/bezierCurveController';
-import { BezierSurfaceController } from './controllers/bezierSurfaceController';
-import { BSplineCurveController } from './controllers/bsplineCurveController';
+import { Controller } from './base/controller';
+import { BezierCurveController } from './bezier/bezierCurveController';
+import { BezierSurfaceController } from './bezier/bezierSurfaceController';
+import { BSplineCurveController } from './spline/bsplineCurveController';
 
 // fetch button elements from the navbar
 const bcurves = document.getElementById("bezier-curve");

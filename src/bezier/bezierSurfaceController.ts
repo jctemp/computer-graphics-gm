@@ -1,10 +1,10 @@
 import { GUI } from "dat.gui";
 import { AmbientLight, DirectionalLight } from "three";
-import { BezierSurfaceLogic } from "../logic/bezierSurfaceLogic";
-import { Canvas } from "../core/canvas";
-import { Controller } from "./controller";
-import { Surface, SurfacePosition } from "../components/surface";
-import { ControlPoints2d } from "../components/controlPoints";
+import { BezierSurfaceLogic } from "./bezierSurfaceLogic";
+import { Canvas } from "../base/canvas";
+import { Controller } from "../base/controller";
+import { Surface, SurfacePosition } from "../base/surface";
+import { ControlPoints2d } from "../base/controlPoints";
 
 export class BezierSurfaceController extends Controller {
 

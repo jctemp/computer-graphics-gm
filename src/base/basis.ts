@@ -1,7 +1,7 @@
 import { GridHelper, Group, Vector3 } from "three";
-import { primaryColor } from "../core/color";
-import { Slot } from "../core/connector";
-import { CustomLine } from "../core/customLine";
+import { primaryColor } from "./color";
+import { Slot } from "./connector";
+import { CustomLine } from "./customLine";
 
 /**
  * The `Basis` class describes the polynomial basis of degree n. It creates
