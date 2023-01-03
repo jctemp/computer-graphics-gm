@@ -38,15 +38,15 @@ describe("SplineLogic", () => {
         });
     });
 
-    test("alphaValuesSumToOne", () => {
-        const controlPoints: Vector3[] = [];
+    const cP_Medium: Vector3[] = [];
         [0, 4, 8, 4, 8, 0, 8].forEach(x => {
-            controlPoints.push(new Vector3(x, 0, 0));
+            cP_Medium.push(new Vector3(x, 0, 0));
         });
-        const knotVector = new KnotVector([0, 0.25, 0.25, 0.5, 0.6, 0.6, 0.8, 0.9, 1]);
-        const weights = [1, 1, 1, 1, 1, 1, 1];
+    const kV_Medium = new KnotVector([0, 0.25, 0.25, 0.5, 0.6, 0.6, 0.8, 0.9, 1]);
+    const pW_Medium = [1, 1, 1, 1, 1, 1, 1];
 
-        const [_a, _b, _c, bases] = SplineLogic.generateCurve(knotVector, controlPoints, weights, 3, 100);
+    test("alphaValuesSumToOne", () => {
+        const [_a, _b, _c, bases] = SplineLogic.generateCurve(kV_Medium, cP_Medium, pW_Medium, 3, 100);
 
         bases.forEach(value => {
             let sum = 0;
@@ -58,40 +58,26 @@ describe("SplineLogic", () => {
     });
 
     test("evaluatePositionsContinuity", () => {
-        const controlPoints: Vector3[] = [];
-        [0, 4, 8, 4, 8, 0, 8].forEach(x => {
-            controlPoints.push(new Vector3(x, 0, 0));
-        });
-        const knotVector = new KnotVector([0, 0.25, 0.25, 0.5, 0.6, 0.6, 0.8, 0.9, 1]);
-        const weights = [1, 1, 1, 1, 1, 1, 1];
-
         const degree = 3;
         const epsilon = 0.000001;
-        const [leftBound, rightBound] = knotVector.support(degree);
+        const [leftBound, rightBound] = kV_Medium.support(degree);
 
         [0.25, 0.5, 0.6].forEach(value => {
-            const knot = LinearInterpolation.evaluatePosition(knotVector, controlPoints, weights, degree, value)[0].x;
+            const knot = LinearInterpolation.evaluatePosition(kV_Medium, cP_Medium, pW_Medium, degree, value)[0].x;
 
             const upper = value + epsilon;
             if (upper < rightBound)
-                expect(knot).toBeCloseTo(LinearInterpolation.evaluatePosition(knotVector, controlPoints, weights, degree, upper)[0].x);
+                expect(knot).toBeCloseTo(LinearInterpolation.evaluatePosition(kV_Medium, cP_Medium, pW_Medium, degree, upper)[0].x);
 
             const lower = value - epsilon;
             if (lower >= leftBound)
-                expect(knot).toBeCloseTo(LinearInterpolation.evaluatePosition(knotVector, controlPoints, weights, degree, lower)[0].x);
+                expect(knot).toBeCloseTo(LinearInterpolation.evaluatePosition(kV_Medium, cP_Medium, pW_Medium, degree, lower)[0].x);
         });
     });
 
     test("compareMethods", () => {
-        const controlPoints: Vector3[] = [];
-        [0, 4, 8, 4, 8, 0, 8].forEach(x => {
-            controlPoints.push(new Vector3(x, 0, 0));
-        });
-        const knotVector = new KnotVector([0, 0.25, 0.25, 0.5, 0.6, 0.6, 0.8, 0.9, 1]);
-        const weights = [1, 1, 1, 1, 1, 1, 1];
-
-        const [pointA, tangentsA, _intermA, alphasA] = SplineLogic.generateCurve(knotVector, controlPoints, weights, 3, 100, true);
-        const [pointB, tangentsB, _intermB, alphasB] = SplineLogic.generateCurve(knotVector, controlPoints, weights, 3, 100, false);
+        const [pointA, tangentsA, _intermA, alphasA] = SplineLogic.generateCurve(kV_Medium, cP_Medium, pW_Medium, 3, 100, true);
+        const [pointB, tangentsB, _intermB, alphasB] = SplineLogic.generateCurve(kV_Medium, cP_Medium, pW_Medium, 3, 100, false);
 
         pointA.forEach((a, idx) => {
             const b = pointB[idx];
@@ -130,9 +116,9 @@ describe("Utils", () => {
 });
 
 // since this takes a lot of time i commented it out. my results were
-//      Linear Interpolation    = 3631 ms
-//      Cox De Boor             = 6675 ms
-/*
+//      Linear Interpolation    = 3631 ms ,  2277 ms
+//      Cox De Boor             = 6675 ms , 10351 ms 
+// note: Cox De Boor without cache is approximately half as fast
 describe("Timer", () => {
     test("CurveCalculationMethods", () => {
         const controlPoints: Vector3[] = [];
@@ -140,17 +126,17 @@ describe("Timer", () => {
             controlPoints.push(new Vector3(x, 0, 0));
         });
         const knotVector = new KnotVector([0, 0.25, 0.25, 0.5, 0.6, 0.6, 0.8, 0.9, 1]);
+        const pW_Medium = [1, 1, 1, 1, 1, 1, 1];
         const ITERATIONS = 1000;
     
         console.time('LinearInterpolation');
         for (let i = 0; i < ITERATIONS; i++)
-            SplineLogic.generateCurve(knotVector, controlPoints, 3, 100, true);
+            SplineLogic.generateCurve(knotVector, controlPoints, pW_Medium, 3, 100, true);
         console.timeEnd('LinearInterpolation');
     
         console.time('CoxDeBoor');
         for (let i = 0; i < ITERATIONS; i++)
-            SplineLogic.generateCurve(knotVector, controlPoints, 3, 100, false);
+            SplineLogic.generateCurve(knotVector, controlPoints, pW_Medium, 3, 100, false);
         console.timeEnd('CoxDeBoor');
     });
 });
-*/
