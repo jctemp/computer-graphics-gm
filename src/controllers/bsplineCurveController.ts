@@ -22,23 +22,51 @@ class Weights {
         FUNCTIONALITY.
         */
     }
-
+    /**
+     * returns the weights represented as a string for GUI purposes.
+     */
     public get weights(): string {
         return this._weights.toString().replaceAll(",", " ");
     }
 
+    /**
+     * get the private attribute containing the weights as an array.
+     * 
+     * @returns array containing numerical weights
+     */
     public weightArray(): number[] {
         return this._weights;
     }
-    public append(value: number) {
+
+    /**
+     * append one new weight with default value of 1.
+     * 
+     * @param value to set the new weight to
+     */
+    public append(value: number = 1) {
         this._weights.push(value);
     }
+    /**
+     * remove exactly one weight at the array's end.
+     */
     public remove() {
         this._weights.pop();
     }
+
+    /**
+     * change the weight's value at the given position to a new numerical value.
+     * 
+     * @param pos position inside the array of weights
+     * @param value new value of the weight
+     */
     public change(pos: number, value: number) {
         if (this._weights.at(pos) !== undefined) this._weights[pos] = value;
     }
+
+    /**
+     * change the length of the weight array. is needed for sudden changes of more than
+     * one difference when e.g. changing the degree from 5 to 3.
+     */
     public set length(length: number) {
         while (this._weights.length > length) this.remove();
         while (this._weights.length < length) this.append(1);
@@ -46,10 +74,9 @@ class Weights {
 }
 
 export class BSplineCurveController extends Controller {
-
     /// -----------------------------------------------------------------------
-    /// CONSTRUCTOR, GETTER and SETTER
-    /// ----------------------------------------------------------------------- 
+    /// ATTRIBUTES
+    /// -----------------------------------------------------------------------
 
     private _basis: Basis;
     private _knots: KnotVector;
@@ -58,6 +85,10 @@ export class BSplineCurveController extends Controller {
     private _u: number;
     private _wPos: number;
     private _wVal: number;
+
+    /// -----------------------------------------------------------------------
+    /// CONSTRUCTOR, GETTER and SETTER
+    /// ----------------------------------------------------------------------- 
 
     public get degree(): number {
         return this._degree;
@@ -76,7 +107,9 @@ export class BSplineCurveController extends Controller {
     constructor(canvasWidth: () => number, canvasHeight: () => number) {
         super();
 
+        // set default value for the point shown on the curve
         this._u = 0;
+        // set default values for the weight parameter inside the GUI
         this._wPos = 0;
         this._wVal = 1;
 
@@ -84,22 +117,25 @@ export class BSplineCurveController extends Controller {
         this.addCanvas(new Canvas(canvasWidth, canvasHeight));
         this.addCanvas(new Canvas(canvasWidth, canvasHeight, false));
 
+        // 2. set spline specific parameter
         this._knots = new KnotVector([-1, -1, 2, 3, 5, 5, 5, 7, 8, 10, 10]);
         this._degree = 3;
         this._weights = new Weights([1, 1, 1, 1, 1, 1, 1, 1, 1]);
 
-        // 2. control points
+        // 3. control points
         this.appendControlPoints(new ControlPoints1d(this._knots.controlPolygon(this.degree)));
 
-        // 3. curve
+        // 4. curve
         this.addObject(new Curve());
 
+        // 5. append basis for intermediates
         this._basis = new Basis();
         this.canvas[1].append(this._basis);
 
-        // 4. signals
+        // 6. signals
         this.connectStandardSignals();
 
+        // execute changed method for initial calculations
         this.changed();
     }
 
@@ -130,7 +166,7 @@ export class BSplineCurveController extends Controller {
 
         curve.open();
         insertion.open();
-        weights.open();
+        // weights.open();
         curvePoint.open();
 
 
@@ -164,6 +200,10 @@ export class BSplineCurveController extends Controller {
             .name("Toggle Current Point");
     }
 
+    /// -----------------------------------------------------------------------
+    /// CALLS FOR OBJECT-TYPE IDENTIFICATION
+    /// -----------------------------------------------------------------------
+
     private points(): ControlPoints1d {
         return this._controlPoints as ControlPoints1d;
     }
@@ -174,8 +214,12 @@ export class BSplineCurveController extends Controller {
         return this._position as CurvePosition;
     }
 
+    /// -----------------------------------------------------------------------
+    /// WRAPPER. ONLY FOR GUI
+    /// -----------------------------------------------------------------------
+
     /**
-     * Wrapper to make insert call. Only for the UI.
+     * Wrapper to make knot insert call.
      */
     // @ts-ignore
     private addKnot(): void {
@@ -183,7 +227,7 @@ export class BSplineCurveController extends Controller {
     }
 
     /**
-     * Wrapper to make delete call. Only for the UI.
+     * Wrapper to make knot delete call.
      */
     // @ts-ignore
     private removeKnot(): void {
@@ -191,7 +235,7 @@ export class BSplineCurveController extends Controller {
     }
 
     /**
-     * Wrapper to make change call on weights object. Only for the UI.
+     * Wrapper to make value change call on weights object.
      */
     // @ts-ignore
     private changeWeight() {
