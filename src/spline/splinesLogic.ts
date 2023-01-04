@@ -268,9 +268,19 @@ export class LinearInterpolation {
         //      for each row of the intermediate points in reverse order 
         //          the influence of the current point is calculated back to the original control points
         //      each point is dependent on two paths' which it influences -> that is why it is value += ...
-        // this does indeed work but could probably be directly integrated in the above loop
-        // after that the influence values are filled to the right point in the array over all control point
-        // influences which will almost all be 0 (which is why the array gets filled with zeros to begin with).
+        // this does indeed work but could probably be directly integrated in the above loop.
+        //     
+        //    .                             .   ┎━━━━━━━━━━━┳━━━━━━━━━━━┓    . 
+        //    .          0        0         .   ┃   1 - a   ┃   1 - c   ┃    .  Calculations
+        //    .         ╱        ╱          .   ┣━━━━━━━━━━━╂━━━━━━━━━━━┫    .  b(2,0) = 1
+        //    .  b(0,0) ─ b(1,0) ─ b(2,0)   .   ┃     a     ┃     c     ┃    .  b(1,0) = 0 + (1 - c) * 1
+        //    .         ╱        ╱          .   ┣━━━━━━━━━━━╂━━━━━━━━━━━┛    .  b(1,1) = 0 + c * 1 + 0
+        //    .  b(0,1) ─ b(1,1) ─ 0        .   ┃   1 - b   ┃                .  b(0,0) = 0 + (1 - a) * b(1,0)
+        //    .         ╱                   .   ┣━━━━━━━━━━━┫                .  b(0,1) = a * b(1,0) + b * b(1,1)
+        //    .  b(0,2) ─ 0                 .   ┃     b     ┃                .  b(0,2) = 0 + b * b(1,1)
+        //    .                             .   ┗━━━━━━━━━━━┛                .
+        //                               
+
         const coefficients = new Array(degree + 1 - r).fill(1).map((_value, idx) => new Array(degree + 1 - r - idx).fill(1));
         for (let row = degree - r - 1; row >= 0; row--) {
             coefficients[row].forEach((_value, idx) => {
