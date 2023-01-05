@@ -7,6 +7,7 @@ import { SplineLogic } from "./splinesLogic";
 import { Basis } from "../base/basis";
 import { KnotVector } from "./knotVector";
 import { transpose } from "../base/utils";
+import { connect } from "../base/connector";
 
 class Weights {
     private _weights: number[] = [];
@@ -134,6 +135,7 @@ export class BSplineCurveController extends Controller {
 
         // 6. signals
         this.connectStandardSignals();
+        connect(this.position().signalTime, this._basis.slotTime);
 
         // execute changed method for initial calculations
         this.changed();
